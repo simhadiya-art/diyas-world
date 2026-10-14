@@ -1,0 +1,329 @@
+---
+// The lion ("Simha" means lion), dressed up: a mane of set gems, kohl-lined eyes,
+// a maang tikka and a tiny nath. Click to boop. Eyes follow the cursor.
+interface Props {
+  class?: string;
+}
+const { class: className } = Astro.props;
+
+const accents = ['ruby', 'sapphire', 'emerald'];
+// 16 kite-cut stones around the face, gold alternating with coloured ones.
+const gems = Array.from({ length: 16 }, (_, i) => ({
+  angle: i * 22.5,
+  tone: i % 2 === 0 ? 'gold' : accents[((i - 1) / 2) % 3],
+}));
+const pearls = gems.map((g) => g.angle + 11.25);
+const kundan = Array.from({ length: 28 }, (_, i) => (360 / 28) * i);
+const clipId = `jlion-eyes-${Math.random().toString(36).slice(2, 8)}`;
+const star = 'M0-6L1.4-1.4L6 0L1.4 1.4L0 6L-1.4 1.4L-6 0L-1.4-1.4Z';
+---
+
+<div class:list={['jlion-wrap', className]} data-jlion>
+  <button class="jlion-btn" type="button" aria-label="Boop the lion. Simha means lion.">
+    <svg class="jlion" viewBox="0 0 120 120" fill="none" stroke="var(--ink)" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">
+      <defs>
+        <clipPath id={clipId}>
+          <path d="M44 57Q50 51.5 56 57Q50 60.5 44 57Z" />
+          <path d="M64 57Q70 51.5 76 57Q70 60.5 64 57Z" />
+        </clipPath>
+      </defs>
+
+      <g class="jlion__spin">
+        <g class="jlion__mane">
+          {
+            gems.map((g) => (
+              <g transform={`rotate(${g.angle} 60 60)`}>
+                <g class={`jlion__gem tone-${g.tone}`}>
+                  <path class="facet-1" d="M60 4L53.5 17L60 30Z" />
+                  <path class="facet-2" d="M60 4L66.5 17L60 30Z" />
+                  <path d="M53.5 17H66.5" stroke-width="0.6" />
+                </g>
+              </g>
+            ))
+          }
+          {pearls.map((a) => <circle class="jlion__pearl" cx="60" cy="21" r="2.1" transform={`rotate(${a} 60 60)`} />)}
+        </g>
+      </g>
+
+      <circle class="jlion__collar" cx="60" cy="60" r="31" />
+      {kundan.map((a) => <circle class="jlion__kundan" cx="60" cy="31.8" r="1" transform={`rotate(${a} 60 60)`} />)}
+
+      <!-- ears -->
+      <path class="jlion__ear" d="M41 45L38 30L52 37Z" />
+      <path class="jlion__ear" d="M79 45L82 30L68 37Z" />
+      <path class="jlion__ear-in" d="M42.5 41L41 34L47.5 37.5Z" stroke="none" />
+      <path class="jlion__ear-in" d="M77.5 41L79 34L72.5 37.5Z" stroke="none" />
+
+      <!-- face -->
+      <path class="jlion__face" d="M60 33C73 33 83 41 83 55C83 69 74 81 60 88C46 81 37 69 37 55C37 41 47 33 60 33Z" />
+
+      <!-- maang tikka -->
+      <path d="M60 33V40" stroke="var(--saffron)" stroke-width="1" stroke-dasharray="0.1 2" />
+      <circle class="jlion__pearl" cx="60" cy="40.6" r="1.3" />
+      <g class="jlion__tikka tone-ruby">
+        <path class="facet-1" d="M60 42.2L56.6 46.6L60 51Z" />
+        <path class="facet-2" d="M60 42.2L63.4 46.6L60 51Z" />
+      </g>
+
+      <!-- brows -->
+      <g class="jlion__brows" stroke-width="1.5">
+        <path d="M44.5 51.5Q49 49 53.5 50.8" />
+        <path d="M66.5 50.8Q71 49 75.5 51.5" />
+      </g>
+
+      <!-- eyes -->
+      <g class="jlion__eyes">
+        <path class="jlion__eye" d="M44 57Q50 51.5 56 57Q50 60.5 44 57Z" />
+        <path class="jlion__eye" d="M64 57Q70 51.5 76 57Q70 60.5 64 57Z" />
+        <g clip-path={`url(#${clipId})`}>
+          <g class="jlion__pupils" stroke="none">
+            <circle cx="50" cy="56.6" r="2.2" fill="#172733" />
+            <circle cx="70" cy="56.6" r="2.2" fill="#172733" />
+            <circle cx="50.8" cy="55.8" r="0.65" fill="#fff" />
+            <circle cx="70.8" cy="55.8" r="0.65" fill="#fff" />
+          </g>
+        </g>
+        <path d="M44 57L40.4 55.1M76 57L79.6 55.1" stroke-width="1.5" />
+      </g>
+
+      <!-- nose, mouth, whiskers, nath -->
+      <path class="jlion__nose" d="M54.5 66H65.5L60 72.5Z" />
+      <path d="M60 72.5V75.5M53 76.5Q56.5 80 60 75.5Q63.5 80 67 76.5" />
+      <g class="jlion__whiskers" stroke="none">
+        <circle cx="51" cy="71.5" r="0.8" />
+        <circle cx="48.4" cy="73.6" r="0.8" />
+        <circle cx="51.8" cy="74.4" r="0.8" />
+        <circle cx="69" cy="71.5" r="0.8" />
+        <circle cx="71.6" cy="73.6" r="0.8" />
+        <circle cx="68.2" cy="74.4" r="0.8" />
+      </g>
+      <circle cx="64" cy="71.3" r="2.6" stroke="var(--saffron)" stroke-width="0.9" />
+      <circle class="jlion__pearl" cx="64" cy="73.9" r="0.9" stroke-width="0.6" />
+
+      <!-- a little glitter -->
+      <g transform="translate(104 15)"><path class="jlion__spark" d={star} /></g>
+      <g transform="translate(13 99) scale(0.75)"><path class="jlion__spark" d={star} /></g>
+      <g transform="translate(108 97) scale(0.55)"><path class="jlion__spark" d={star} /></g>
+    </svg>
+  </button>
+  <p class="jlion__bubble" role="status" aria-live="polite"></p>
+</div>
+
+<style>
+  .jlion-wrap {
+    position: relative;
+    width: var(--lion-size, 200px);
+  }
+  .jlion-btn {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    border-radius: 50%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .jlion {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+    filter: drop-shadow(0 10px 18px color-mix(in oklab, var(--ink) 18%, transparent));
+  }
+  /* only elements without a transform attribute get a CSS origin */
+  .jlion__eyes,
+  .jlion__brows,
+  .jlion__spark {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .jlion__tikka {
+    transform-box: fill-box;
+    transform-origin: 50% 0;
+  }
+  .jlion__gem {
+    transform-box: fill-box;
+    transform-origin: 50% 100%;
+  }
+  .jlion__spin,
+  .jlion__mane {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+  }
+  .jlion__mane {
+    animation: jlion-turn 90s linear infinite;
+  }
+  .jlion__pearl {
+    fill: color-mix(in oklab, var(--bg) 40%, white);
+    stroke-width: 0.8;
+  }
+  .jlion__collar {
+    fill: color-mix(in oklab, var(--saffron) 32%, var(--bg));
+  }
+  .jlion__kundan {
+    fill: var(--saffron);
+    stroke: none;
+  }
+  .jlion__ear {
+    fill: var(--saffron);
+  }
+  .jlion__ear-in {
+    fill: var(--ruby);
+  }
+  .jlion__face {
+    fill: var(--bg);
+  }
+  .jlion__eye {
+    fill: #fbf7ef;
+  }
+  .jlion__nose {
+    fill: var(--ink);
+  }
+  .jlion__whiskers {
+    fill: var(--ink);
+  }
+  .jlion__spark {
+    fill: var(--saffron);
+    stroke: none;
+    animation: jlion-twinkle 2.6s ease-in-out infinite;
+  }
+  g:nth-last-of-type(2) > .jlion__spark {
+    animation-delay: -0.9s;
+    fill: var(--ruby);
+  }
+  g:last-of-type > .jlion__spark {
+    animation-delay: -1.7s;
+    fill: var(--magenta);
+  }
+  @keyframes jlion-turn {
+    to {
+      rotate: 360deg;
+    }
+  }
+  @keyframes jlion-twinkle {
+    0%,
+    100% {
+      scale: 0.3;
+      opacity: 0.3;
+      rotate: 0deg;
+    }
+    50% {
+      scale: 1.1;
+      opacity: 1;
+      rotate: 45deg;
+    }
+  }
+
+  .jlion__bubble {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    margin: 0 0 0.4rem;
+    translate: -50% 0;
+    width: max-content;
+    max-width: 220px;
+    padding: 0.45rem 0.85rem;
+    background: var(--saffron);
+    color: var(--on-saffron);
+    border: 2px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 3px 3px 0 var(--ink);
+    font-family: var(--font-hand);
+    font-weight: 700;
+    font-size: 1.35rem;
+    line-height: 1.1;
+    pointer-events: none;
+    opacity: 0;
+  }
+  .jlion__bubble:empty {
+    display: none;
+  }
+</style>
+
+<script>
+  import { animate, stagger } from 'animejs';
+  import { reducedMotion } from '../scripts/motion';
+
+  const LINES = [
+    'roar (politely).',
+    'Simha means lion. hi!',
+    'every stone hand-set.',
+    'ok that tickles.',
+    'ROAAAR!',
+    'you found the lion.',
+    'yes, the nath is real gold.',
+  ];
+
+  document.querySelectorAll<HTMLElement>('[data-jlion]').forEach((wrap) => {
+    const btn = wrap.querySelector<HTMLButtonElement>('.jlion-btn')!;
+    const svg = wrap.querySelector<SVGSVGElement>('svg')!;
+    const pupils = wrap.querySelector<SVGGElement>('.jlion__pupils')!;
+    const eyes = wrap.querySelector<SVGGElement>('.jlion__eyes')!;
+    const brows = wrap.querySelector<SVGGElement>('.jlion__brows')!;
+    const spin = wrap.querySelector<SVGGElement>('.jlion__spin')!;
+    const gems = wrap.querySelectorAll<SVGGElement>('.jlion__gem');
+    const tikka = wrap.querySelector<SVGGElement>('.jlion__tikka')!;
+    const bubble = wrap.querySelector<HTMLElement>('.jlion__bubble')!;
+    const reduced = reducedMotion();
+
+    // ----- eyes follow the pointer -----
+    let frame = 0;
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        if (frame) return;
+        frame = requestAnimationFrame(() => {
+          frame = 0;
+          const r = svg.getBoundingClientRect();
+          const dx = e.clientX - (r.left + r.width / 2);
+          const dy = e.clientY - (r.top + r.height * 0.47);
+          const d = Math.hypot(dx, dy) || 1;
+          const k = Math.min(1, d / 260);
+          pupils.style.transform = `translate(${(dx / d) * 2.4 * k}px, ${(dy / d) * 1.1 * k}px)`;
+        });
+      },
+      { passive: true },
+    );
+
+    if (!reduced) {
+      // ----- blink every few seconds -----
+      const blink = () => {
+        animate(eyes, { scaleY: [1, 0.08, 1], duration: 220, ease: 'inOut(2)' });
+        setTimeout(blink, 2800 + Math.random() * 4200);
+      };
+      setTimeout(blink, 2400);
+
+      // ----- the mane shimmers on hover -----
+      btn.addEventListener('pointerenter', () => {
+        animate(gems, { scale: [1, 1.2, 1], duration: 650, delay: stagger(28), ease: 'outElastic(1, .5)' });
+      });
+    }
+
+    // ----- boop -----
+    let count = 0;
+    let rot = 0;
+    let hideTimer: number | undefined;
+    btn.addEventListener('click', () => {
+      const line = LINES[count % LINES.length];
+      const big = line === 'ROAAAR!';
+      count++;
+      bubble.textContent = line;
+      clearTimeout(hideTimer);
+
+      if (reduced) {
+        bubble.style.opacity = '1';
+        hideTimer = window.setTimeout(() => (bubble.style.opacity = '0'), 2200);
+        return;
+      }
+
+      rot += big ? 720 : 360;
+      animate(spin, { rotate: rot, duration: big ? 1600 : 1100, ease: 'outElastic(1, .6)' });
+      animate(gems, { scale: [1, big ? 1.55 : 1.35, 1], duration: 800, delay: stagger(22, { from: 'center' }), ease: 'outElastic(1, .4)' });
+      animate(btn, { scale: [1, big ? 1.22 : 1.1, 1], rotate: big ? [0, -8, 6, 0] : [0, -4, 0], duration: 700, ease: 'outElastic(1, .5)' });
+      animate(brows, { translateY: [0, -2.5, 0], duration: 700, ease: 'out(3)' });
+      animate(tikka, { rotate: [0, 25, -18, 10, 0], duration: 1100, ease: 'out(2)' });
+      animate(bubble, { opacity: [0, 1], scale: [0.5, 1], rotate: [-10, -3], translateY: [10, 0], duration: 450, ease: 'outElastic(1, .55)' });
+      hideTimer = window.setTimeout(() => animate(bubble, { opacity: 0, translateY: -12, duration: 350, ease: 'in(2)' }), 1900);
+    });
+  });
+</script>

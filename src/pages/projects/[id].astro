@@ -164,8 +164,8 @@ const slides = await Promise.all(
     position: absolute;
     right: clamp(1rem, 4vw, 3rem);
     bottom: clamp(1rem, 4vw, 2.5rem);
-    border: 3px solid #b0175f;
-    color: #b0175f;
+    border: 3px solid var(--magenta);
+    color: var(--magenta);
     font-family: var(--font-display);
     font-weight: 800;
     font-size: clamp(0.9rem, 2.4vw, 1.3rem);
@@ -177,7 +177,7 @@ const slides = await Promise.all(
   }
   .case__title {
     font-size: clamp(3.2rem, 11vw, 9rem);
-    color: #1f1420;
+    color: var(--ink);
   }
   .case__summary {
     margin-top: 1.2rem;
@@ -194,14 +194,14 @@ const slides = await Promise.all(
   }
   .case__stats li {
     display: grid;
-    border-top: 2.5px solid #1f1420;
+    border-top: 2.5px solid var(--ink);
     padding-top: 0.5rem;
   }
   .case__stats strong {
     font-family: var(--font-display);
     font-size: clamp(2.2rem, 5vw, 3.4rem);
     line-height: 1;
-    color: #b0175f;
+    color: var(--magenta);
   }
   .case__stats span {
     font-size: 0.9rem;
@@ -313,8 +313,9 @@ const slides = await Promise.all(
 
   .note {
     max-width: 640px;
-    background: #fff4b8;
-    color: #2a1d10;
+    background: var(--bg-2);
+    color: var(--ink);
+    border-left: 4px solid var(--saffron);
     padding: 1.4rem 1.6rem;
     rotate: -1.2deg;
     box-shadow: 4px 6px 0 rgba(0, 0, 0, 0.18);
@@ -323,7 +324,7 @@ const slides = await Promise.all(
   .note__title {
     font-size: 1.8rem;
     margin: 0 0 0.3rem;
-    color: #b0175f;
+    color: var(--magenta);
   }
   .case__nav {
     display: flex;

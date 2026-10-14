@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import LionMark from './LionMark.astro';
+import JewelMark from './JewelMark.astro';
 
 const places = (await getCollection('places')).sort((a, b) => a.data.order - b.data.order);
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
@@ -16,8 +16,8 @@ const soon = ['The Studio', 'The Dance Floor', 'The Deep End', 'Character Profil
 
 <header class="nav">
   <div class="nav__inner">
-    <a href="/" class="nav__logo" data-roar-logo aria-label="Diya's World, home">
-      <LionMark size={38} />
+    <a href="/" class="nav__logo" aria-label="Diya's World, home">
+      <JewelMark size={38} />
       <span class="nav__word">Diya's<span class="serif"> World</span></span>
     </a>
 
@@ -116,10 +116,10 @@ const soon = ['The Studio', 'The Dance Floor', 'The Deep End', 'Character Profil
     text-decoration: none;
     color: var(--magenta);
   }
-  .nav__logo :global(.lion-mark) {
+  .nav__logo :global(.jewel-mark) {
     transition: transform 0.4s var(--spring);
   }
-  .nav__logo:hover :global(.lion-mark) {
+  .nav__logo:hover :global(.jewel-mark) {
     transform: rotate(-12deg) scale(1.08);
   }
   .nav__word {
@@ -320,33 +320,10 @@ const soon = ['The Studio', 'The Dance Floor', 'The Deep End', 'Character Profil
     font-size: 0.85rem;
   }
 
-  :global(.roar-bubble) {
-    position: fixed;
-    z-index: 90;
-    background: var(--saffron);
-    color: var(--on-saffron);
-    border: 2.5px solid var(--ink);
-    border-radius: 18px;
-    padding: 0.6rem 1rem;
-    box-shadow: 5px 5px 0 var(--ink);
-    pointer-events: none;
-    display: grid;
-    max-width: 250px;
-  }
-  :global(.roar-bubble strong) {
-    font-family: var(--font-display);
-    font-size: 2rem;
-    line-height: 1;
-  }
-  :global(.lion-mark path) {
-    transform-box: fill-box;
-    transform-origin: center;
-  }
 </style>
 
 <script>
   import { animate, stagger } from 'animejs';
-  import { makeRoarCounter } from '../scripts/roar';
   import { reducedMotion } from '../scripts/motion';
 
   // ----- theme toggle (remembers the visitor's choice) -----
@@ -361,17 +338,6 @@ const soon = ['The Studio', 'The Dance Floor', 'The Deep End', 'Character Profil
       localStorage.setItem('dw-theme', next);
     } catch {}
     window.dispatchEvent(new CustomEvent('themechange', { detail: next }));
-  });
-
-  // ----- lion logo easter egg: click 5× on the home page -----
-  const logo = document.querySelector<HTMLAnchorElement>('[data-roar-logo]')!;
-  const lion = logo.querySelector('svg')!;
-  const count = makeRoarCounter(lion);
-  logo.addEventListener('click', (e) => {
-    if (location.pathname === '/') {
-      e.preventDefault();
-      count();
-    }
   });
 
   // ----- legend (mobile menu) -----

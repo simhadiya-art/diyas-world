@@ -1,6 +1,5 @@
 ---
-// A square pulli kolam: a diamond of dots, each wrapped in a looping petal.
-// Used as an illustrated placeholder wherever there is no photo yet.
+// A faceted jaali medallion used as an illustrated placeholder.
 interface Props {
   size?: number;
   rings?: number;
@@ -9,27 +8,20 @@ interface Props {
   dotColor?: string;
 }
 const { size = 240, rings = 3, class: className, color = 'currentColor', dotColor } = Astro.props;
-const gap = 24;
 const c = 120;
-const dots: [number, number][] = [];
-for (let r = -rings; r <= rings; r++) {
-  const span = rings - Math.abs(r);
-  for (let k = -span; k <= span; k++) dots.push([c + k * gap, c + r * gap]);
-}
-const h = gap / 2;
-// rounded diamond around each dot
-const loop = ([x, y]: [number, number]) =>
-  `M${x} ${y - h} Q${x + h * 1.25} ${y - h * 1.25} ${x + h} ${y} Q${x + h * 1.25} ${y + h * 1.25} ${x} ${y + h} Q${x - h * 1.25} ${y + h * 1.25} ${x - h} ${y} Q${x - h * 1.25} ${y - h * 1.25} ${x} ${y - h}Z`;
-const outer = rings * gap + gap;
-const ringPath = `M${c} ${c - outer} Q${c + outer} ${c - outer} ${c + outer} ${c} Q${c + outer} ${c + outer} ${c} ${c + outer} Q${c - outer} ${c + outer} ${c - outer} ${c} Q${c - outer} ${c - outer} ${c} ${c - outer}Z`;
-const tips = [0, 90, 180, 270].map(
-  (a) => `<g transform="rotate(${a} ${c} ${c})"><path d="M${c} ${c - outer} C${c - 14} ${c - outer - 20} ${c + 14} ${c - outer - 20} ${c} ${c - outer}" /></g>`,
-);
+const layers = Array.from({ length: rings + 1 }, (_, i) => 30 + (i + 1) * 22);
+const star = (radius: number) =>
+  Array.from({ length: 16 }, (_, i) => {
+    const angle = (Math.PI * i) / 8 - Math.PI / 2;
+    const r = i % 2 ? radius * 0.68 : radius;
+    return `${(c + Math.cos(angle) * r).toFixed(1)},${(c + Math.sin(angle) * r).toFixed(1)}`;
+  }).join(' ');
 ---
 
 <svg class:list={['kolam', className]} viewBox="0 0 240 240" width={size} height={size} fill="none" stroke={color} stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-  <path d={ringPath} data-draw></path>
-  <Fragment set:html={tips.join('')} />
-  {dots.map((d) => <path d={loop(d)} data-draw />)}
-  {dots.map(([x, y]) => <circle cx={x} cy={y} r="2.4" fill={dotColor ?? color} stroke="none" />)}
+  {layers.map((radius) => <polygon points={star(radius)} data-draw />)}
+  <path d="M120 8V94M232 120H146M120 232V146M8 120H94M41 41L94 94M199 41L146 94M199 199L146 146M41 199L94 146" data-draw />
+  <polygon points="120,88 152,120 120,152 88,120" fill={dotColor ?? color} fill-opacity="0.14" stroke={dotColor ?? color} stroke-width="2.2" data-draw />
+  <path d="M120 97L143 120L120 143L97 120Z" data-draw />
+  <circle cx="120" cy="120" r="4" fill={dotColor ?? color} stroke="none" />
 </svg>

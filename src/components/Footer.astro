@@ -1,5 +1,5 @@
 ---
-import LionMark from './LionMark.astro';
+import JewelMark from './JewelMark.astro';
 import KolamBorder from './KolamBorder.astro';
 const year = new Date().getFullYear();
 ---
@@ -7,9 +7,7 @@ const year = new Date().getFullYear();
 <footer class="footer">
   <KolamBorder />
   <div class="wrap footer__inner">
-    <button class="footer__lion" type="button" data-roar-footer aria-label="A lion. Try clicking it five times.">
-      <LionMark size={64} strokeWidth={1.8} />
-    </button>
+    <span class="footer__mark" aria-hidden="true"><JewelMark size={64} strokeWidth={1.8} /></span>
     <div class="footer__text">
       <p class="footer__big">Still reading? <span class="serif">Then we should talk.</span></p>
       <p>
@@ -33,12 +31,11 @@ const year = new Date().getFullYear();
     align-items: flex-start;
     padding-top: 2rem;
   }
-  .footer__lion {
+  .footer__mark {
     border: none;
     background: none;
     padding: 0;
     color: var(--magenta);
-    cursor: pointer;
     flex: none;
   }
   .footer__big {
@@ -64,8 +61,3 @@ const year = new Date().getFullYear();
   }
 </style>
 
-<script>
-  import { makeRoarCounter } from '../scripts/roar';
-  const btn = document.querySelector<HTMLButtonElement>('[data-roar-footer]')!;
-  btn.addEventListener('click', makeRoarCounter(btn.querySelector('svg')!));
-</script>

@@ -2,7 +2,7 @@
 // Phoenix: swipe an (original, made-up) card through the reader and the summer
 // prints out as a receipt, one line item per swipe.
 import type { CollectionEntry } from 'astro:content';
-import LionMark from '../LionMark.astro';
+import JewelMark from '../JewelMark.astro';
 interface Props {
   place: CollectionEntry<'places'>;
   experiences?: CollectionEntry<'experiences'>[];
@@ -28,7 +28,7 @@ const items = experiences.flatMap((e) => e.data.highlights);
           <div class="dcard" data-card>
             <span class="dcard__brand">DIYA<span class="serif">pay</span></span>
             <span class="dcard__chip" aria-hidden="true"></span>
-            <span class="dcard__lion" aria-hidden="true"><LionMark size={64} strokeWidth={1.6} /></span>
+            <span class="dcard__jewel" aria-hidden="true"><JewelMark size={64} strokeWidth={1.6} /></span>
             <span class="dcard__num">•••• •••• •••• 2026</span>
             <span class="dcard__row">
               <span>
@@ -144,7 +144,7 @@ const items = experiences.flatMap((e) => e.data.highlights);
     background:
       radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.35), transparent 40%),
       repeating-radial-gradient(circle at 110% 120%, transparent 0 14px, rgba(255, 255, 255, 0.08) 14px 16px),
-      linear-gradient(135deg, #b0175f 0%, #e0408a 45%, #f2a900 100%);
+      linear-gradient(135deg, #123b55 0%, #176d6b 58%, #c4a15b 100%);
     border: 2.5px solid var(--ink);
     box-shadow: 6px 8px 0 var(--ink);
     cursor: grab;
@@ -176,7 +176,7 @@ const items = experiences.flatMap((e) => e.data.highlights);
       linear-gradient(transparent 45%, rgba(0, 0, 0, 0.3) 45% 55%, transparent 55%),
       linear-gradient(135deg, #f8e3a1, #d7a93c);
   }
-  .dcard__lion {
+  .dcard__jewel {
     position: absolute;
     right: 1rem;
     top: 0.8rem;
@@ -252,24 +252,24 @@ const items = experiences.flatMap((e) => e.data.highlights);
     line-height: 1.35;
   }
   .receipt__n {
-    color: #b0175f;
+    color: var(--magenta);
     font-weight: 700;
   }
   .receipt__ok {
-    color: #0e7c7b;
+    color: var(--teal);
     font-weight: 700;
   }
   .receipt__total {
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    border-top: 2px dashed #1f1420;
+    border-top: 2px dashed var(--ink);
     margin-top: 0.9rem;
     padding-top: 0.6rem;
     font-weight: 700;
   }
   .receipt__empty {
-    color: #6b5a60;
+    color: var(--muted);
     margin: 0.4rem 0;
   }
   .receipt__thanks {

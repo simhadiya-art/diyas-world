@@ -1,77 +1,40 @@
-// The Gate's hero: a field of kolam dots that scatter from the cursor (or finger),
-// connect into kolam-like loops nearby, and form the lion mark in the middle.
-import { FACE, PETAL, PETAL_VEIN, LION_CENTER, petalAngles } from '../lib/lion';
+// The Gate's hero: a field of dots that scatter from the cursor (or finger),
+// a trail of sparkles behind it, and a burst of gems wherever you click.
 
-type Dot = { hx: number; hy: number; x: number; y: number; vx: number; vy: number; lion: boolean; col: number; row: number };
+type Dot = { hx: number; hy: number; x: number; y: number; vx: number; vy: number; col: number; row: number };
 type Ripple = { x: number; y: number; r: number; life: number };
+/** kind 0 = twinkling four-point star (trail), kind 1 = faceted gem (burst) */
+type Spark = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; color: string; rot: number; spin: number; kind: 0 | 1 };
+
+const MAX_SPARKS = 260;
 
 export function initHeroField(canvas: HTMLCanvasElement, { reduced = false } = {}) {
   const ctx = canvas.getContext('2d')!;
   let w = 0, h = 0, dpr = 1, spacing = 28;
   let dots: Dot[] = [];
   let grid: (Dot | undefined)[][] = [];
-  let lionPaths: Path2D[] = [];
-  let lionBox = { x: 0, y: 0, size: 0 };
   const pointer = { x: -9999, y: -9999, active: false };
+  const lastSpawn = { x: -9999, y: -9999 };
   const ripples: Ripple[] = [];
+  const sparks: Spark[] = [];
   let colors = readColors();
   let running = false;
   let visible = true;
   let t = 0;
-  let lionReveal = 1; // lion strokes opacity multiplier
 
   function readColors() {
     const s = getComputedStyle(document.documentElement);
-    return {
-      ink: s.getPropertyValue('--ink').trim() || '#1f1420',
-      muted: s.getPropertyValue('--muted').trim() || '#6b5a60',
-      magenta: s.getPropertyValue('--magenta').trim() || '#b0175f',
-      saffron: s.getPropertyValue('--saffron').trim() || '#f2a900',
-      teal: s.getPropertyValue('--teal').trim() || '#0e7c7b',
+    const v = (name: string, fallback: string) => s.getPropertyValue(name).trim() || fallback;
+    const c = {
+      muted: v('--muted', '#536775'),
+      jewel: v('--magenta', '#315d88'),
+      brass: v('--saffron', '#c4a15b'),
+      teal: v('--teal', '#176d6b'),
+      ruby: v('--ruby', '#c2416b'),
     };
+    return { ...c, gems: [c.brass, c.ruby, c.jewel, c.teal, c.brass] };
   }
-
-  function buildLion() {
-    const mobile = w < 760;
-    const size = mobile ? Math.min(w * 0.86, h * 0.5) : Math.min(h * 0.74, w * 0.4);
-    const cx = mobile ? w / 2 : w * 0.75;
-    const cy = mobile ? h * 0.3 : h * 0.5;
-    lionBox = { x: cx - size / 2, y: cy - size / 2, size };
-
-    const k = size / 100;
-    const m = new DOMMatrix().translate(lionBox.x, lionBox.y).scale(k);
-    const raw: Path2D[] = [];
-    for (const a of petalAngles) {
-      const rot = new DOMMatrix().translate(LION_CENTER.x, LION_CENTER.y).rotate(a).translate(-LION_CENTER.x, -LION_CENTER.y);
-      for (const d of [PETAL, PETAL_VEIN]) {
-        const p = new Path2D();
-        p.addPath(new Path2D(d), rot);
-        raw.push(p);
-      }
-    }
-    FACE.forEach((d) => raw.push(new Path2D(d)));
-    lionPaths = raw.map((p) => {
-      const out = new Path2D();
-      out.addPath(p, m);
-      return out;
-    });
-
-    // Sample which grid dots sit on the lion's lines.
-    const off = document.createElement('canvas');
-    off.width = Math.ceil(w);
-    off.height = Math.ceil(h);
-    const o = off.getContext('2d', { willReadFrequently: true })!;
-    o.lineWidth = Math.max(spacing * 0.42, 2.4 * k);
-    o.lineCap = 'round';
-    o.strokeStyle = '#000';
-    lionPaths.forEach((p) => o.stroke(p));
-    const data = o.getImageData(0, 0, off.width, off.height).data;
-    for (const d of dots) {
-      const px = Math.round(d.hx), py = Math.round(d.hy);
-      if (px < 0 || py < 0 || px >= off.width || py >= off.height) continue;
-      d.lion = data[(py * off.width + px) * 4 + 3] > 40;
-    }
-  }
+  const pick = () => colors.gems[(Math.random() * colors.gems.length) | 0];
 
   function resize() {
     const rect = canvas.getBoundingClientRect();
@@ -95,13 +58,52 @@ export function initHeroField(canvas: HTMLCanvasElement, { reduced = false } = {
       for (let c = 0; c < cols; c++) {
         const hx = ox + c * spacing;
         const hy = oy + r * spacing;
-        const d: Dot = { hx, hy, x: hx, y: hy, vx: 0, vy: 0, lion: false, col: c, row: r };
+        const d: Dot = { hx, hy, x: hx, y: hy, vx: 0, vy: 0, col: c, row: r };
         dots.push(d);
         grid[r][c] = d;
       }
     }
-    buildLion();
     draw();
+  }
+
+  function spawnTrail(x: number, y: number) {
+    if (sparks.length >= MAX_SPARKS) return;
+    const max = 30 + Math.random() * 22;
+    sparks.push({
+      x: x + (Math.random() - 0.5) * 14,
+      y: y + (Math.random() - 0.5) * 14,
+      vx: (Math.random() - 0.5) * 0.8,
+      vy: (Math.random() - 0.5) * 0.6 + 0.25,
+      life: max,
+      max,
+      size: 3 + Math.random() * 5,
+      color: pick(),
+      rot: 0,
+      spin: 0,
+      kind: 0,
+    });
+  }
+
+  function burst(x: number, y: number, n = 28) {
+    for (let i = 0; i < n && sparks.length < MAX_SPARKS; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const speed = 3 + Math.random() * 7;
+      const max = 55 + Math.random() * 40;
+      const gem = Math.random() > 0.35;
+      sparks.push({
+        x,
+        y,
+        vx: Math.cos(a) * speed,
+        vy: Math.sin(a) * speed - 3,
+        life: max,
+        max,
+        size: gem ? 4 + Math.random() * 5 : 4 + Math.random() * 6,
+        color: pick(),
+        rot: Math.random() * Math.PI,
+        spin: (Math.random() - 0.5) * 0.3,
+        kind: gem ? 1 : 0,
+      });
+    }
   }
 
   function step() {
@@ -142,26 +144,75 @@ export function initHeroField(canvas: HTMLCanvasElement, { reduced = false } = {
       d.x += d.vx;
       d.y += d.vy;
     }
+
+    for (const s of sparks) {
+      if (s.kind === 1) {
+        s.vy += 0.22;
+        s.vx *= 0.985;
+      } else {
+        s.vx *= 0.96;
+        s.vy = s.vy * 0.96 + 0.015;
+      }
+      s.x += s.vx;
+      s.y += s.vy;
+      s.rot += s.spin;
+      s.life -= 1;
+    }
+    for (let i = sparks.length - 1; i >= 0; i--) if (sparks[i].life <= 0 || sparks[i].y > h + 40) sparks.splice(i, 1);
+  }
+
+  function drawStar(s: Spark) {
+    const k = s.life / s.max;
+    const r = s.size * Math.sin(k * Math.PI); // grow then shrink: a twinkle
+    const i = r * 0.22;
+    ctx.globalAlpha = Math.min(1, k * 2);
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.moveTo(s.x, s.y - r);
+    ctx.lineTo(s.x + i, s.y - i);
+    ctx.lineTo(s.x + r, s.y);
+    ctx.lineTo(s.x + i, s.y + i);
+    ctx.lineTo(s.x, s.y + r);
+    ctx.lineTo(s.x - i, s.y + i);
+    ctx.lineTo(s.x - r, s.y);
+    ctx.lineTo(s.x - i, s.y - i);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawGem(s: Spark) {
+    const r = s.size;
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.rot);
+    ctx.globalAlpha = Math.min(1, s.life / 20);
+    ctx.fillStyle = s.color;
+    ctx.beginPath();
+    ctx.moveTo(0, -r);
+    ctx.lineTo(r * 0.7, -r * 0.2);
+    ctx.lineTo(0, r * 1.1);
+    ctx.lineTo(-r * 0.7, -r * 0.2);
+    ctx.closePath();
+    ctx.fill();
+    // lighter facet so it catches the light
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.moveTo(0, -r);
+    ctx.lineTo(r * 0.7, -r * 0.2);
+    ctx.lineTo(0, r * 1.1);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   function draw() {
     ctx.clearRect(0, 0, w, h);
     const R = Math.max(110, spacing * 5);
 
-    // faint lion line art underneath
-    ctx.save();
-    ctx.globalAlpha = 0.5 * lionReveal;
-    ctx.strokeStyle = colors.magenta;
-    ctx.lineWidth = Math.max(1.4, lionBox.size / 200);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    lionPaths.forEach((p) => ctx.stroke(p));
-    ctx.restore();
-
     // kolam loops near the pointer: curves between neighbouring dots
     if (pointer.active) {
       ctx.save();
-      ctx.strokeStyle = colors.saffron;
+      ctx.strokeStyle = colors.brass;
       ctx.lineWidth = 1.4;
       for (const d of dots) {
         const dist = Math.hypot(d.x - pointer.x, d.y - pointer.y);
@@ -173,34 +224,30 @@ export function initHeroField(canvas: HTMLCanvasElement, { reduced = false } = {
         ctx.beginPath();
         if (right) {
           ctx.moveTo(d.x, d.y);
-          ctx.quadraticCurveTo((d.x + right.x) / 2, (d.y + right.y) / 2 + bend * spacing * 0.45, right.x, right.y);
+          ctx.lineTo((d.x + right.x) / 2, (d.y + right.y) / 2 + bend * spacing * 0.28);
+          ctx.lineTo(right.x, right.y);
         }
         if (down) {
           ctx.moveTo(d.x, d.y);
-          ctx.quadraticCurveTo((d.x + down.x) / 2 + bend * spacing * 0.45, (d.y + down.y) / 2, down.x, down.y);
+          ctx.lineTo((d.x + down.x) / 2 + bend * spacing * 0.28, (d.y + down.y) / 2);
+          ctx.lineTo(down.x, down.y);
         }
         ctx.stroke();
       }
       ctx.restore();
     }
 
-    // the dots
+    // the dots: displaced ones light up in jewel tones
     for (const d of dots) {
       const disp = Math.min(1, Math.hypot(d.x - d.hx, d.y - d.hy) / 18);
-      if (d.lion) {
-        ctx.globalAlpha = 0.35 + 0.65 * lionReveal;
-        ctx.fillStyle = disp > 0.3 ? colors.saffron : colors.magenta;
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, 2.6 + disp * 1.4, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.globalAlpha = 0.28 + disp * 0.6;
-        ctx.fillStyle = disp > 0.3 ? colors.teal : colors.muted;
-        ctx.beginPath();
-        ctx.arc(d.x, d.y, 1.5 + disp * 1.2, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.globalAlpha = 0.28 + disp * 0.65;
+      ctx.fillStyle = disp > 0.3 ? colors.gems[(d.col + d.row * 3) % colors.gems.length] : colors.muted;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 1.5 + disp * 1.6, 0, Math.PI * 2);
+      ctx.fill();
     }
+
+    for (const s of sparks) (s.kind === 1 ? drawGem : drawStar)(s);
     ctx.globalAlpha = 1;
   }
 
@@ -230,11 +277,17 @@ export function initHeroField(canvas: HTMLCanvasElement, { reduced = false } = {
     pointer.x = p.x;
     pointer.y = p.y;
     pointer.active = true;
+    if (Math.hypot(p.x - lastSpawn.x, p.y - lastSpawn.y) > 18) {
+      spawnTrail(p.x, p.y);
+      lastSpawn.x = p.x;
+      lastSpawn.y = p.y;
+    }
   });
   target.addEventListener('pointerleave', () => (pointer.active = false));
   target.addEventListener('pointerdown', (e) => {
     const p = toLocal(e);
     ripples.push({ x: p.x, y: p.y, r: 0, life: 1 });
+    burst(p.x, p.y);
     if (e.pointerType !== 'mouse') {
       pointer.x = p.x;
       pointer.y = p.y;
@@ -270,6 +323,10 @@ export function initHeroField(canvas: HTMLCanvasElement, { reduced = false } = {
     /** Send a ripple from a point (used by the intro). */
     ripple(x = w / 2, y = h / 2) {
       ripples.push({ x, y, r: 0, life: 1 });
+    },
+    /** Throw a handful of gems from a point (canvas coordinates). */
+    burst(x: number, y: number, n?: number) {
+      if (!reduced) burst(x, y, n);
     },
   };
 }

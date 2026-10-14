@@ -3,17 +3,18 @@
    ========================================================================== */
 
 :root {
-  --bg: #fbf4e6;
-  --bg-2: #f4e8d1; /* slightly deeper paper for cards */
-  --ink: #1f1420;
-  --saffron: #f2a900;
-  --magenta: #b0175f;
-  --teal: #0e7c7b;
-  --muted: #6b5a60;
+  --bg: #e7edf1;
+  --bg-2: #d8e1e7;
+  --ink: #172733;
+  --saffron: #c4a15b;
+  --magenta: #315d88;
+  --teal: #176d6b;
+  --ruby: #c2416b;
+  --muted: #536775;
   --line: color-mix(in oklab, var(--ink) 16%, transparent);
-  --on-saffron: #1f1420;
-  --chalk-bg: #1f3a33;
-  --chalk: #f3efe4;
+  --on-saffron: #172733;
+  --chalk-bg: #173b3d;
+  --chalk: #e7edf1;
 
   --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
   --font-serif: 'Instrument Serif', Georgia, serif;
@@ -22,7 +23,7 @@
 
   --gutter: clamp(1rem, 4vw, 3rem);
   --max: 1240px;
-  --radius: 18px;
+  --radius: 10px;
   --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
@@ -30,29 +31,33 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #1a0b16;
-  --bg-2: #271421;
-  --ink: #f7ebdd;
-  --saffron: #ffb81c;
-  --magenta: #e0408a;
-  --teal: #2bb3ad;
-  --muted: #bfafa8;
-  --on-saffron: #1a0b16;
-  --chalk-bg: #12241f;
+  --bg: #101d27;
+  --bg-2: #1b2b37;
+  --ink: #e7edf1;
+  --saffron: #dfbd74;
+  --magenta: #8eafd2;
+  --teal: #68bdb3;
+  --ruby: #ee86a8;
+  --muted: #b3c1ca;
+  --on-saffron: #172733;
+  --chalk-bg: #102a2c;
+  --chalk: #e7edf1;
   color-scheme: dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #1a0b16;
-    --bg-2: #271421;
-    --ink: #f7ebdd;
-    --saffron: #ffb81c;
-    --magenta: #e0408a;
-    --teal: #2bb3ad;
-    --muted: #bfafa8;
-    --on-saffron: #1a0b16;
-    --chalk-bg: #12241f;
+    --bg: #101d27;
+    --bg-2: #1b2b37;
+    --ink: #e7edf1;
+    --saffron: #dfbd74;
+    --magenta: #8eafd2;
+    --teal: #68bdb3;
+    --ruby: #ee86a8;
+    --muted: #b3c1ca;
+    --on-saffron: #172733;
+    --chalk-bg: #102a2c;
+    --chalk: #e7edf1;
     color-scheme: dark;
   }
 }
@@ -222,7 +227,7 @@ p {
   align-items: center;
   gap: 0.6em;
   padding: 0.95em 1.6em;
-  border-radius: 999px;
+  border-radius: 6px;
   border: 2px solid var(--ink);
   background: var(--btn-bg);
   color: var(--btn-fg);
@@ -267,6 +272,26 @@ p {
   border: 1.5px solid currentColor;
   font-size: 0.8rem;
   font-weight: 700;
+}
+
+/* ---------- gem tones (lion, toran) ---------- */
+.tone-gold {
+  --g: var(--saffron);
+}
+.tone-ruby {
+  --g: var(--ruby);
+}
+.tone-sapphire {
+  --g: var(--magenta);
+}
+.tone-emerald {
+  --g: var(--teal);
+}
+.facet-1 {
+  fill: var(--g);
+}
+.facet-2 {
+  fill: color-mix(in oklab, var(--g) 50%, white);
 }
 
 /* elements that animate in: visible by default, JS hides them only when it can animate them */

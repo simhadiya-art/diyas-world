@@ -2,12 +2,13 @@
 import { getCollection } from 'astro:content';
 import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import LionMark from '../components/LionMark.astro';
+import JewelMark from '../components/JewelMark.astro';
 import KolamBorder from '../components/KolamBorder.astro';
 import Door from '../components/Door.astro';
+import JeweledLion from '../components/JeweledLion.astro';
+import Toran from '../components/Toran.astro';
 import headshot from '../assets/images/diya-headshot.jpg';
 
-const places = (await getCollection('places')).sort((a, b) => a.data.order - b.data.order);
 const projects = await getCollection('projects');
 const featured = projects.sort((a, b) => a.data.order - b.data.order)[0];
 
@@ -22,9 +23,9 @@ const doors = [
 ---
 
 <Base>
-  <!-- First-visit intro: the lion draws itself, then the world opens. -->
+  <!-- First-visit intro: the jewel draws itself, then the world opens. -->
   <div class="intro" id="intro" aria-hidden="true">
-    <div class="intro__lion"><LionMark size={220} strokeWidth={1.6} /></div>
+    <div class="intro__jewel"><JewelMark size={220} strokeWidth={1.6} /></div>
     <p class="intro__line serif">entering Diya's world…</p>
     <button class="intro__skip" type="button" data-skip-intro>Skip intro →</button>
   </div>
@@ -38,14 +39,19 @@ const doors = [
 
   <section class="hero" aria-labelledby="hero-title">
     <canvas class="hero__field" aria-hidden="true"></canvas>
+    <div class="hero__lion">
+      <JeweledLion />
+    </div>
     <div class="hero__copy wrap">
       <p class="eyebrow hero__eyebrow"><span class="dot"></span> Diya Simha · UC Davis · Operations, strategy & AI</p>
       <h1 id="hero-title" class="display hero__title">
         <span class="line">Welcome to</span>
         <span class="line"><span class="hl-magenta">Diya's</span> world.</span>
       </h1>
-      <p class="hero__sub serif">It's a little loud in here.</p>
-      <p class="hero__hint hand" aria-hidden="true">wiggle your cursor around ↗ (or tap, on a phone)</p>
+      <p class="hero__sub serif">
+        <button class="hero__tagline" type="button" data-tagline aria-live="polite" title="Click for another">It's a little loud in here.</button>
+      </p>
+      <p class="hero__hint hand" aria-hidden="true">wiggle your cursor · click anywhere for sparkle · boop the lion ↗</p>
     </div>
     <a class="hero__scroll" href="#hello" aria-label="Scroll to introduction">
       <span>scroll</span>
@@ -84,21 +90,7 @@ const doors = [
     </div>
   </section>
 
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee__track">
-      {
-        [0, 1].map(() => (
-          <span>
-            {places.map((p) => (
-              <>
-                {p.data.name} <i>✺</i>{' '}
-              </>
-            ))}
-          </span>
-        ))
-      }
-    </div>
-  </div>
+  <Toran />
 
   <section class="doors section" aria-labelledby="doors-title">
     <div class="wrap">
@@ -215,13 +207,69 @@ const doors = [
   .hero__title {
     font-size: clamp(3.4rem, 13vw, 11.5rem);
   }
+  .hero__title {
+    pointer-events: auto;
+  }
   .hero__title .line {
     display: block;
+  }
+  .hero__title :global(.is-lit) {
+    color: var(--lit);
+    transition: color 0.15s;
   }
   .hero__sub {
     font-size: clamp(2rem, 5.5vw, 4.6rem);
     margin: 0.4rem 0 0;
     color: var(--teal);
+    perspective: 600px;
+  }
+  .hero__tagline {
+    pointer-events: auto;
+    display: inline-block;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: underline dotted color-mix(in oklab, currentColor 35%, transparent);
+    text-decoration-thickness: 0.06em;
+    text-underline-offset: 0.18em;
+  }
+  .hero__tagline:hover {
+    color: var(--magenta);
+  }
+
+  /* ---------- the lion ---------- */
+  .hero__lion {
+    position: absolute;
+    z-index: 1;
+    top: clamp(1.5rem, 7vh, 4.5rem);
+    right: calc(var(--gutter) + 2vw);
+    --lion-size: clamp(150px, 15vw, 210px);
+    animation: lion-float 5s ease-in-out infinite;
+  }
+  @keyframes lion-float {
+    50% {
+      translate: 0 -10px;
+    }
+  }
+  @media (max-width: 759px) {
+    /* on phones the lion sits in the flow above the title, so they never overlap */
+    .hero {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .hero__lion {
+      position: relative;
+      top: auto;
+      right: auto;
+      align-self: center;
+      margin: 1.75rem 0 auto;
+      --lion-size: 130px;
+    }
   }
   .hero__hint {
     margin-top: 1.4rem;
@@ -273,7 +321,7 @@ const doors = [
     width: min(100%, 360px);
   }
   .polaroid {
-    background: #fffdf7;
+    background: var(--bg-2);
     padding: 12px 12px 0;
     border: 2px solid var(--ink);
     box-shadow: 8px 8px 0 var(--magenta);
@@ -285,7 +333,7 @@ const doors = [
     width: 100%;
   }
   .polaroid__cap {
-    color: #1f1420;
+    color: var(--ink);
     font-size: 1.5rem;
     text-align: center;
     margin: 0.3rem 0 0.4rem;
@@ -336,41 +384,6 @@ const doors = [
   }
   .hello__text .h2 {
     margin: 0.4rem 0 1.4rem;
-  }
-
-  /* ---------- marquee ---------- */
-  .marquee {
-    border-block: 2.5px solid var(--ink);
-    background: var(--saffron);
-    color: var(--on-saffron);
-    overflow: hidden;
-    padding: 0.7rem 0;
-    rotate: -1.5deg;
-    margin-inline: -2rem;
-  }
-  .marquee__track {
-    display: flex;
-    width: max-content;
-    animation: marquee 28s linear infinite;
-    font-family: var(--font-display);
-    font-weight: 800;
-    font-size: clamp(1.8rem, 5vw, 3.6rem);
-    letter-spacing: -0.03em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .marquee__track span {
-    padding-right: 1rem;
-  }
-  .marquee i {
-    font-style: normal;
-    color: var(--magenta);
-    margin: 0 0.6rem;
-  }
-  @keyframes marquee {
-    to {
-      transform: translateX(-50%);
-    }
   }
 
   /* ---------- doors ---------- */
@@ -459,6 +472,24 @@ const doors = [
       delay: stagger(22),
       ease: 'outElastic(1, .7)',
     });
+    // letters hop and flash a jewel tone when you brush over them
+    const tones = ['var(--saffron)', 'var(--ruby)', 'var(--magenta)', 'var(--teal)'];
+    chars.forEach((c, i) => {
+      let t: number | undefined;
+      c.addEventListener('pointerenter', () => {
+        c.style.setProperty('--lit', tones[(Math.random() * tones.length) | 0]);
+        c.classList.add('is-lit');
+        clearTimeout(t);
+        t = window.setTimeout(() => c.classList.remove('is-lit'), 900);
+        animate(c, { translateY: [0, -26, 0], rotate: [0, (i % 2 ? 1 : -1) * 14, 0], duration: 750, ease: 'outElastic(1, .45)' });
+      });
+    });
+    animate('.hero__lion .jlion-btn', { scale: [0, 1], rotate: [-120, 0], duration: 1100, delay: 450, ease: 'outElastic(1, .6)' });
+    setTimeout(() => {
+      const c = canvas.getBoundingClientRect();
+      const l = document.querySelector('.hero__lion')!.getBoundingClientRect();
+      field.burst(l.left + l.width / 2 - c.left, l.top + l.height / 2 - c.top, 36);
+    }, 750);
     animate(['.hero__eyebrow', '.hero__sub', '.hero__hint'], {
       opacity: [0, 1],
       translateY: [20, 0],
@@ -476,8 +507,8 @@ const doors = [
     try {
       localStorage.setItem('dw-intro', '1');
     } catch {}
-    const lion = intro.querySelector('svg')!;
-    const drawables = svg.createDrawable(lion.querySelectorAll('path'));
+    const jewel = intro.querySelector('svg')!;
+    const drawables = svg.createDrawable(jewel.querySelectorAll('path'));
     let done = false;
     const finish = () => {
       if (done) return;
@@ -497,12 +528,51 @@ const doors = [
     const tl = createTimeline({ onComplete: finish })
       .add(drawables, { draw: ['0 0', '0 1'], duration: 900, delay: stagger(18), ease: 'inOut(2)' })
       .add('.intro__line', { opacity: [0, 1], translateY: [10, 0], duration: 300 }, 200)
-      .add(lion, { scale: [1, 1.12, 1], duration: 350, ease: 'outElastic(1, .5)' });
+      .add(jewel, { scale: [1, 1.12, 1], duration: 350, ease: 'outElastic(1, .5)' });
     intro.querySelector('[data-skip-intro]')!.addEventListener('click', finish);
     window.addEventListener('keydown', finish, { once: true });
   } else {
     heroEntrance();
   }
+
+  // ----- the tagline shuffles when clicked -----
+  const TAGLINES = [
+    "It's a little loud in here.",
+    'Mind the sparkle.',
+    'Shoes off, chai on.',
+    'Now with 40% more rhinestones.',
+    'Est. Bangalore. Still expanding.',
+    'Overcommitted. Overjoyed.',
+    'Please do not feed the lion.',
+  ];
+  const tagline = document.querySelector<HTMLButtonElement>('[data-tagline]')!;
+  let tagIndex = 0;
+  let flipping = false;
+  tagline.addEventListener('click', () => {
+    if (flipping) return;
+    tagIndex = (tagIndex + 1) % TAGLINES.length;
+    if (reduced) {
+      tagline.textContent = TAGLINES[tagIndex];
+      return;
+    }
+    flipping = true;
+    animate(tagline, {
+      rotateX: [0, 90],
+      opacity: [1, 0],
+      duration: 180,
+      ease: 'in(2)',
+      onComplete: () => {
+        tagline.textContent = TAGLINES[tagIndex];
+        animate(tagline, {
+          rotateX: [-90, 0],
+          opacity: [0, 1],
+          duration: 500,
+          ease: 'outElastic(1, .6)',
+          onComplete: () => (flipping = false),
+        });
+      },
+    });
+  });
 
   // ----- draggable stickers -----
   if (!reduced) {

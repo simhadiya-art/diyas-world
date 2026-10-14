@@ -49,6 +49,7 @@ const icons: Record<Props['symbol'], string> = {
     --c: var(--teal);
   }
   .door__frame {
+    position: relative;
     display: grid;
     grid-template-rows: 1fr auto;
     text-decoration: none;
@@ -58,15 +59,41 @@ const icons: Record<Props['symbol'], string> = {
     background: var(--bg-2);
     overflow: hidden;
     perspective: 900px;
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
     transition:
       transform 0.35s var(--spring),
       box-shadow 0.35s var(--spring);
     box-shadow: 5px 5px 0 var(--ink);
   }
+  .door__frame.is-tilting {
+    transition:
+      transform 0.12s ease-out,
+      box-shadow 0.35s var(--spring);
+  }
   a.door__frame:hover,
   a.door__frame:focus-visible {
-    transform: translate(-3px, -3px);
+    transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translate(-3px, -3px);
     box-shadow: 9px 9px 0 var(--c);
+  }
+  /* a glint of light that follows the cursor across the door */
+  .door__frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+      110deg,
+      transparent calc(var(--gx, 50%) - 22%),
+      color-mix(in oklab, white 55%, transparent) var(--gx, 50%),
+      transparent calc(var(--gx, 50%) + 22%)
+    );
+    mix-blend-mode: soft-light;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .door__frame:hover::after {
+    opacity: 1;
   }
   .door__inside,
   .door__panel {
@@ -160,4 +187,50 @@ const icons: Record<Props['symbol'], string> = {
   .door--saffron a .tag {
     color: var(--on-saffron);
   }
+  .door--soon .door__frame {
+    cursor: pointer;
+  }
 </style>
+
+<script>
+  import { animate } from 'animejs';
+  import { reducedMotion } from '../scripts/motion';
+
+  const reduced = reducedMotion();
+
+  // ----- doors tilt toward the cursor -----
+  if (!reduced && matchMedia('(hover: hover)').matches) {
+    document.querySelectorAll<HTMLElement>('.door__frame').forEach((f) => {
+      f.addEventListener('pointermove', (e) => {
+        const r = f.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        f.classList.add('is-tilting');
+        f.style.setProperty('--ry', `${(px - 0.5) * 12}deg`);
+        f.style.setProperty('--rx', `${(0.5 - py) * 9}deg`);
+        f.style.setProperty('--gx', `${px * 100}%`);
+      });
+      f.addEventListener('pointerleave', () => {
+        f.classList.remove('is-tilting');
+        ['--rx', '--ry', '--gx'].forEach((p) => f.style.removeProperty(p));
+      });
+    });
+  }
+
+  // ----- locked rooms rattle when you try them -----
+  const QUIPS = ['Locked (for now)', 'Wet paint!', 'Nice try', 'Soon. Promise.'];
+  document.querySelectorAll<HTMLElement>('.door--soon').forEach((door) => {
+    const tag = door.querySelector<HTMLElement>('.tag')!;
+    const original = tag.textContent;
+    let n = 0;
+    let timer: number | undefined;
+    door.querySelector('.door__frame')!.addEventListener('click', () => {
+      tag.textContent = QUIPS[n++ % QUIPS.length];
+      clearTimeout(timer);
+      timer = window.setTimeout(() => (tag.textContent = original), 1600);
+      if (reduced) return;
+      animate(door, { translateX: [0, -7, 7, -5, 5, -2, 0], duration: 450, ease: 'linear' });
+      animate(door.querySelector('.door__knob')!, { rotate: [0, -40, 30, -20, 0], duration: 600, ease: 'out(2)' });
+    });
+  });
+</script>

@@ -1,5 +1,5 @@
 ---
-// A strip of kolam: a row of dots with two lines weaving around them.
+// A repeating cut-gem jaali border.
 interface Props {
   color?: string;
   units?: number;
@@ -7,23 +7,18 @@ interface Props {
 const { color = 'var(--magenta)', units = 48 } = Astro.props;
 const step = 36;
 const mid = 22;
-const amp = 17;
-const weave = (dir: number) => {
-  let d = `M0 ${mid}`;
-  for (let i = 0; i < units; i++) {
-    const x = i * step;
-    d += ` Q${x + step / 2} ${mid + dir * amp * (i % 2 ? -1 : 1)} ${x + step} ${mid}`;
-  }
-  return d;
-};
-const dots = Array.from({ length: units }, (_, i) => i * step + step / 2);
+const centers = Array.from({ length: units }, (_, i) => i * step + step / 2);
 ---
 
 <div class="kolam-border" aria-hidden="true">
   <svg viewBox={`0 0 ${units * step} 44`} width={units * step} height="44" fill="none" stroke={color} stroke-width="2" stroke-linecap="round">
-    <path d={weave(1)} data-draw></path>
-    <path d={weave(-1)} data-draw></path>
-    {dots.map((x) => <circle cx={x} cy={mid} r="2.6" fill={color} stroke="none" />)}
+    {centers.map((x) => (
+      <>
+        <path d={`M${x} 4L${x + 18} ${mid}L${x} 40L${x - 18} ${mid}Z`} data-draw />
+        <path d={`M${x} 14L${x + 8} ${mid}L${x} 30L${x - 8} ${mid}Z`} data-draw />
+        <circle cx={x} cy={mid} r="2" fill={color} stroke="none" />
+      </>
+    ))}
   </svg>
 </div>
 

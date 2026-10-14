@@ -1,7 +1,7 @@
 ---
 import { Picture } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import LionMark from '../components/LionMark.astro';
+import JewelMark from '../components/JewelMark.astro';
 import headshot from '../assets/images/diya-headshot.jpg';
 
 // Free key from web3forms.com. Set PUBLIC_WEB3FORMS_KEY in .env (local) and in Vercel's settings.
@@ -41,7 +41,7 @@ const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
         <!-- honeypot: humans never see or fill this -->
         <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
 
-        <span class="letter__stamp" aria-hidden="true"><LionMark size={46} strokeWidth={2} /></span>
+        <span class="letter__stamp" aria-hidden="true"><JewelMark size={46} strokeWidth={2} /></span>
         <p class="letter__to hand">To: Diya Simha<br />The Mailroom, Diya's World</p>
 
         <label class="field">
@@ -240,7 +240,7 @@ const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
   const error = form.querySelector<HTMLElement>('[data-error]')!;
   const send = form.querySelector<HTMLButtonElement>('[data-send]')!;
   const key = form.dataset.key;
-  const loadingLines = ['Licking the stamp…', 'Finding a pigeon…', 'Asking the lion to deliver it…', 'Almost there…'];
+  const loadingLines = ['Sealing the letter…', 'Finding the right route…', 'Almost there…'];
 
   const showError = (msg: string) => {
     error.textContent = msg;
