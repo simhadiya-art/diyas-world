@@ -1,0 +1,159 @@
+---
+// Bangalore: a chalkboard where the words get "written" in chalk, framed by kolams.
+import type { CollectionEntry } from 'astro:content';
+import Kolam from '../Kolam.astro';
+import KolamBorder from '../KolamBorder.astro';
+interface Props {
+  place: CollectionEntry<'places'>;
+  experiences?: CollectionEntry<'experiences'>[];
+}
+const { place, experiences = [] } = Astro.props;
+const lessons = experiences.map((e) => e.data.org);
+---
+
+<header class="phero chalk-hero">
+  <div class="wrap">
+    <p class="eyebrow phero__kicker">Stop {place.data.order} · {place.data.region}</p>
+    <div class="board" data-board>
+      <div class="board__frame" aria-hidden="true">
+        <KolamBorder color="var(--chalk)" units={40} />
+      </div>
+      <Kolam class="board__corner board__corner--tl" size={120} rings={2} color="var(--chalk)" />
+      <Kolam class="board__corner board__corner--br" size={120} rings={2} color="var(--chalk)" />
+      <div class="board__inner">
+        <p class="board__date chalk-write">Today's lesson:</p>
+        <h1 class="board__title chalk-write">{place.data.name}.</h1>
+        <p class="board__tag chalk-write">{place.data.tagline}</p>
+        {
+          lessons.length > 0 && (
+            <ol class="board__list">
+              {lessons.map((l) => (
+                <li class="chalk-write">{l}</li>
+              ))}
+            </ol>
+          )
+        }
+      </div>
+      <div class="board__ledge" aria-hidden="true"><span class="board__chalk"></span><span class="board__eraser"></span></div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .board {
+    position: relative;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.07), transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(255, 255, 255, 0.05), transparent 50%),
+      var(--chalk-bg);
+    color: var(--chalk);
+    border: 14px solid #8a5a33;
+    border-radius: 10px;
+    box-shadow:
+      inset 0 0 40px rgba(0, 0, 0, 0.45),
+      8px 8px 0 var(--ink);
+    padding: clamp(3rem, 7vw, 5rem) clamp(1.4rem, 6vw, 5rem) clamp(3.4rem, 7vw, 5rem);
+    overflow: hidden;
+  }
+  .board__frame {
+    position: absolute;
+    inset: 10px 0 auto;
+    opacity: 0.55;
+  }
+  .board :global(.board__corner) {
+    position: absolute;
+    opacity: 0.45;
+  }
+  .board :global(.board__corner--tl) {
+    left: -30px;
+    bottom: -30px;
+  }
+  .board :global(.board__corner--br) {
+    right: -26px;
+    top: 30px;
+  }
+  .board__inner {
+    position: relative;
+    font-family: var(--font-hand);
+  }
+  .board__date {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    margin: 0;
+    opacity: 0.8;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 6px;
+  }
+  .board__title {
+    font-family: var(--font-hand);
+    font-weight: 700;
+    font-size: clamp(4rem, 15vw, 11rem);
+    line-height: 0.9;
+    letter-spacing: 0;
+    margin: 0.2rem 0 0;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.6);
+  }
+  .board__tag {
+    font-size: clamp(1.8rem, 5vw, 3.4rem);
+    margin: 0;
+    color: #ffd76a;
+  }
+  .board__list {
+    margin: 1.4rem 0 0;
+    padding-left: 1.8rem;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    line-height: 1.3;
+  }
+  .board__list li::marker {
+    color: #ff9cc6;
+  }
+  .board__ledge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 16px;
+    background: #6e4526;
+  }
+  .board__chalk {
+    position: absolute;
+    left: 18%;
+    top: -6px;
+    width: 44px;
+    height: 9px;
+    border-radius: 3px;
+    background: #f7f3ea;
+  }
+  .board__eraser {
+    position: absolute;
+    left: 26%;
+    top: -14px;
+    width: 70px;
+    height: 16px;
+    border-radius: 3px;
+    background: linear-gradient(#2d2d2d 0 40%, #c9b48d 40%);
+  }
+</style>
+
+<script>
+  import { animate, stagger, splitText, svg } from 'animejs';
+  import { reducedMotion } from '../../scripts/motion';
+
+  const board = document.querySelector<HTMLElement>('[data-board]');
+  if (board && !reducedMotion()) {
+    // Write each line in chalk, one letter at a time.
+    const chars = Array.from(board.querySelectorAll<HTMLElement>('.chalk-write')).flatMap(
+      (el) => splitText(el, { chars: true, accessible: true }).chars,
+    );
+    animate(chars, {
+      opacity: [0, 1],
+      filter: ['blur(3px)', 'blur(0px)'],
+      translateY: [4, 0],
+      delay: stagger(28, { start: 250 }),
+      duration: 220,
+      ease: 'out(2)',
+    });
+    const paths = board.querySelectorAll('[data-draw]');
+    animate(svg.createDrawable(paths), { draw: ['0 0', '0 1'], duration: 1600, delay: stagger(40), ease: 'inOut(2)' });
+  }
+</script>

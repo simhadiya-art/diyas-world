@@ -1,0 +1,14 @@
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  place: CollectionEntry<'places'>;
+  experiences?: CollectionEntry<'experiences'>[];
+}
+const { place } = Astro.props;
+---
+
+<header class="phero wrap">
+  <p class="eyebrow phero__kicker">Stop {place.data.order} · {place.data.region}</p>
+  <h1 class="display phero__title">{place.data.name}</h1>
+  <p class="phero__tag serif">{place.data.tagline}</p>
+</header>

@@ -1,0 +1,18 @@
+# Diya's original photos, videos and PDFs (huge, and not all meant for the web)
+assets-raw/
+
+# dependencies and build output
+node_modules/
+dist/
+.astro/
+.vercel/
+
+# secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor clutter
+.DS_Store
+Thumbs.db
+desktop.ini

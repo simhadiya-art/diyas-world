@@ -1,0 +1,349 @@
+---
+// Phoenix: swipe an (original, made-up) card through the reader and the summer
+// prints out as a receipt, one line item per swipe.
+import type { CollectionEntry } from 'astro:content';
+import LionMark from '../LionMark.astro';
+interface Props {
+  place: CollectionEntry<'places'>;
+  experiences?: CollectionEntry<'experiences'>[];
+}
+const { place, experiences = [] } = Astro.props;
+const items = experiences.flatMap((e) => e.data.highlights);
+---
+
+<header class="phero card-hero">
+  <div class="wrap">
+    <p class="eyebrow phero__kicker">Stop {place.data.order} · {place.data.region}</p>
+    <h1 class="display phero__title">{place.data.name}</h1>
+    <p class="phero__tag serif">{place.data.tagline}</p>
+
+    <div class="terminal" data-terminal>
+      <div class="swipe">
+        <div class="reader" aria-hidden="true">
+          <span class="reader__slot"></span>
+          <span class="reader__screen" data-screen>SWIPE →</span>
+          <span class="reader__light" data-light></span>
+        </div>
+        <div class="card-track">
+          <div class="dcard" data-card>
+            <span class="dcard__brand">DIYA<span class="serif">pay</span></span>
+            <span class="dcard__chip" aria-hidden="true"></span>
+            <span class="dcard__lion" aria-hidden="true"><LionMark size={64} strokeWidth={1.6} /></span>
+            <span class="dcard__num">•••• •••• •••• 2026</span>
+            <span class="dcard__row">
+              <span>
+                <small>CARDHOLDER</small>
+                DIYA SIMHA
+              </span>
+              <span>
+                <small>VALID THRU</small>
+                SUMMER '26
+              </span>
+            </span>
+          </div>
+        </div>
+        <p class="hand swipe__hint" aria-hidden="true">drag the card to the right →</p>
+        <button class="btn btn--ghost swipe__btn" type="button" data-swipe-btn>Swipe the card</button>
+      </div>
+
+      <div class="receipt" aria-live="polite">
+        <p class="receipt__head">
+          <strong>SUMMER IN PHOENIX</strong>
+          <span>OPERATIONS · AI · SUNSETS</span>
+        </p>
+        <ol class="receipt__items" data-items>
+          {
+            items.map((text, i) => (
+              <li data-item hidden>
+                <span class="receipt__n">{String(i + 1).padStart(2, '0')}</span>
+                <span>{text}</span>
+                <span class="receipt__ok">✓</span>
+              </li>
+            ))
+          }
+        </ol>
+        <p class="receipt__total" data-total hidden>
+          <span>TOTAL</span><span>one very good summer</span>
+        </p>
+        <p class="receipt__empty" data-empty>No transactions yet. Swipe to print the summer.</p>
+        <p class="receipt__thanks">THANK YOU · COME AGAIN</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<style>
+  .terminal {
+    display: grid;
+    gap: 2.5rem;
+    margin-top: 2.5rem;
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .terminal {
+      grid-template-columns: 1.15fr 1fr;
+    }
+  }
+  .swipe {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+  }
+  .reader {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    width: 100%;
+    max-width: 520px;
+    padding: 0.7rem 1rem;
+    background: var(--ink);
+    color: var(--bg);
+    border-radius: 14px 14px 4px 4px;
+  }
+  .reader__slot {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: #000;
+    box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.15);
+  }
+  .reader__screen {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    background: #2c3a2c;
+    color: #b9f5b0;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    min-width: 9.5em;
+    text-align: center;
+  }
+  .reader__light {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #5a4a50;
+    transition: background 0.2s;
+  }
+  .reader__light.is-ok {
+    background: #36e07a;
+    box-shadow: 0 0 12px #36e07a;
+  }
+  .card-track {
+    width: 100%;
+    max-width: 520px;
+    touch-action: pan-y;
+  }
+  .dcard {
+    position: relative;
+    width: min(100%, 360px);
+    aspect-ratio: 1.586;
+    border-radius: 18px;
+    padding: 1.1rem 1.3rem;
+    color: #fff;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.35), transparent 40%),
+      repeating-radial-gradient(circle at 110% 120%, transparent 0 14px, rgba(255, 255, 255, 0.08) 14px 16px),
+      linear-gradient(135deg, #b0175f 0%, #e0408a 45%, #f2a900 100%);
+    border: 2.5px solid var(--ink);
+    box-shadow: 6px 8px 0 var(--ink);
+    cursor: grab;
+    user-select: none;
+    display: grid;
+    grid-template-rows: auto 1fr auto auto;
+  }
+  .dcard:active {
+    cursor: grabbing;
+  }
+  .dcard__brand {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+  }
+  .dcard__brand .serif {
+    font-weight: 400;
+  }
+  .dcard__chip {
+    width: 46px;
+    height: 34px;
+    border-radius: 7px;
+    margin-top: 0.6rem;
+    background: linear-gradient(135deg, #f8e3a1, #d7a93c);
+    border: 1.5px solid rgba(0, 0, 0, 0.35);
+    background-image:
+      linear-gradient(90deg, transparent 45%, rgba(0, 0, 0, 0.3) 45% 55%, transparent 55%),
+      linear-gradient(transparent 45%, rgba(0, 0, 0, 0.3) 45% 55%, transparent 55%),
+      linear-gradient(135deg, #f8e3a1, #d7a93c);
+  }
+  .dcard__lion {
+    position: absolute;
+    right: 1rem;
+    top: 0.8rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .dcard__num {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: clamp(1rem, 3.6vw, 1.25rem);
+    letter-spacing: 0.08em;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+  }
+  .dcard__row {
+    display: flex;
+    justify-content: space-between;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+  }
+  .dcard__row span {
+    display: grid;
+  }
+  .dcard__row small {
+    font-size: 0.55rem;
+    opacity: 0.8;
+  }
+  .swipe__hint {
+    font-size: 1.35rem;
+    color: var(--teal);
+    margin: 0;
+  }
+  .swipe__btn {
+    font-size: 0.95rem;
+    padding: 0.6em 1.2em;
+  }
+
+  .receipt {
+    --paper: #fffdf6;
+    background: var(--paper);
+    color: #1f1420;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 0.9rem;
+    padding: 1.4rem 1.3rem 2rem;
+    box-shadow: 6px 6px 0 var(--ink);
+    border: 2px solid var(--ink);
+    border-bottom: none;
+    position: relative;
+    max-width: 440px;
+    width: 100%;
+    justify-self: center;
+    mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 16px 100%;
+  }
+  .receipt__head {
+    text-align: center;
+    display: grid;
+    border-bottom: 2px dashed #1f1420;
+    padding-bottom: 0.7rem;
+    margin-bottom: 0.8rem;
+  }
+  .receipt__head span {
+    font-size: 0.75rem;
+  }
+  .receipt__items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .receipt__items li {
+    display: grid;
+    grid-template-columns: 2.2em 1fr auto;
+    gap: 0.4rem;
+    line-height: 1.35;
+  }
+  .receipt__n {
+    color: #b0175f;
+    font-weight: 700;
+  }
+  .receipt__ok {
+    color: #0e7c7b;
+    font-weight: 700;
+  }
+  .receipt__total {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    border-top: 2px dashed #1f1420;
+    margin-top: 0.9rem;
+    padding-top: 0.6rem;
+    font-weight: 700;
+  }
+  .receipt__empty {
+    color: #6b5a60;
+    margin: 0.4rem 0;
+  }
+  .receipt__thanks {
+    text-align: center;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    margin-top: 1.2rem;
+    color: #6b5a60;
+  }
+</style>
+
+<script>
+  import { animate, createDraggable } from 'animejs';
+  import { reducedMotion } from '../../scripts/motion';
+
+  const term = document.querySelector<HTMLElement>('[data-terminal]');
+  if (term) {
+    const card = term.querySelector<HTMLElement>('[data-card]')!;
+    const screen = term.querySelector<HTMLElement>('[data-screen]')!;
+    const light = term.querySelector<HTMLElement>('[data-light]')!;
+    const items = Array.from(term.querySelectorAll<HTMLElement>('[data-item]'));
+    const total = term.querySelector<HTMLElement>('[data-total]')!;
+    const empty = term.querySelector<HTMLElement>('[data-empty]')!;
+    const btn = term.querySelector<HTMLButtonElement>('[data-swipe-btn]')!;
+    const reduced = reducedMotion();
+    let printed = 0;
+    const messages = ['APPROVED ✓', 'APPROVED ✓', 'CHA-CHING ✓', 'APPROVED ✓', 'VERY APPROVED', 'STILL APPROVED'];
+
+    const approve = () => {
+      light.classList.add('is-ok');
+      setTimeout(() => light.classList.remove('is-ok'), 600);
+      if (printed < items.length) {
+        screen.textContent = messages[printed % messages.length];
+        empty.hidden = true;
+        const li = items[printed++];
+        li.hidden = false;
+        if (!reduced) animate(li, { opacity: [0, 1], translateY: [-14, 0], duration: 400, ease: 'out(3)' });
+        if (printed === items.length) {
+          total.hidden = false;
+          btn.textContent = 'Start over';
+        }
+      } else {
+        // reset the receipt
+        items.forEach((li) => (li.hidden = true));
+        total.hidden = true;
+        empty.hidden = false;
+        printed = 0;
+        screen.textContent = 'SWIPE →';
+        btn.textContent = 'Swipe the card';
+      }
+    };
+
+    btn.addEventListener('click', () => {
+      if (!reduced) {
+        animate(card, { translateX: [0, 160, 0], duration: 700, ease: 'inOut(3)' });
+      }
+      approve();
+    });
+
+    if (!reduced) {
+      // snap: 0 springs the card back to the start after every swipe
+      createDraggable(card, {
+        y: false,
+        snap: 0,
+        releaseStiffness: 180,
+        releaseDamping: 12,
+        onDrag: (d) => {
+          screen.textContent = d.x > 60 ? 'READING…' : 'SWIPE →';
+        },
+        onRelease: (d) => {
+          if (d.x > 140) approve();
+          else if (d.x > 10) screen.textContent = 'A BIT FURTHER →';
+        },
+      });
+    }
+  }
+</script>

@@ -1,0 +1,163 @@
+---
+// Davis: the bike city. A bike rides across the hero (and you can give it a push).
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  place: CollectionEntry<'places'>;
+  experiences?: CollectionEntry<'experiences'>[];
+}
+const { place } = Astro.props;
+const spokes = Array.from({ length: 8 }, (_, i) => (i * 180) / 8);
+---
+
+<header class="phero bike-hero">
+  <div class="wrap">
+    <p class="eyebrow phero__kicker">Stop {place.data.order} · {place.data.region}</p>
+    <h1 class="display phero__title">{place.data.name}</h1>
+    <p class="phero__tag serif">{place.data.tagline}</p>
+  </div>
+
+  <div class="road" aria-hidden="true">
+    <button class="bike" type="button" data-bike aria-label="Ring the bell" tabindex="-1">
+      <svg viewBox="0 0 200 120" class="phero__art">
+        {
+          [45, 155].map((cx) => (
+            <g class="wheel" style={`transform-origin:${cx}px 88px`}>
+              <circle cx={cx} cy="88" r="28" class="ln" />
+              <circle cx={cx} cy="88" r="24" class="ln tire" />
+              {spokes.map((a) => (
+                <line x1={cx} y1="64" x2={cx} y2="112" class="ln spoke" transform={`rotate(${a} ${cx} 88)`} />
+              ))}
+              <circle cx={cx} cy="88" r="3" class="hub" />
+            </g>
+          ))
+        }
+        <path class="ln frame" d="M45 88 L97 88 L82 44 Z M82 44 L141 47 L97 88 M141 47 L155 88"></path>
+        <path class="ln" d="M141 47 L137 34 Q150 28 158 37"></path>
+        <path class="ln seat" d="M72 41 Q82 37 92 41"></path>
+        <circle cx="97" cy="88" r="7" class="ln"></circle>
+        <path class="ln" d="M97 88 L106 98 M101 101 L111 95"></path>
+        <!-- basket with a book and a tiny flag -->
+        <path class="ln basket" d="M146 40 L170 40 L166 56 L150 56 Z M148 46 L168 46 M151 51 L165 51"></path>
+        <rect x="153" y="31" width="10" height="9" rx="1" class="book"></rect>
+        <path class="ln" d="M82 44 L76 14"></path>
+        <path class="flag" d="M76 14 L92 18 L77 23 Z"></path>
+      </svg>
+      <span class="bike__bell hand">ring ring!</span>
+    </button>
+    <div class="road__line"></div>
+  </div>
+</header>
+
+<style>
+  .bike-hero {
+    padding-bottom: 0;
+  }
+  .road {
+    position: relative;
+    height: clamp(130px, 22vw, 210px);
+    margin-top: 1rem;
+  }
+  .road__line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 16px;
+    border-bottom: 3px dashed var(--ink);
+    opacity: 0.5;
+  }
+  .bike {
+    position: absolute;
+    left: 0;
+    bottom: 10px;
+    width: clamp(150px, 22vw, 230px);
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    will-change: transform;
+  }
+  .bike .frame {
+    stroke: var(--magenta);
+    stroke-width: 3.6;
+  }
+  .bike .tire {
+    stroke-width: 1;
+    opacity: 0.4;
+  }
+  .bike .spoke {
+    stroke-width: 0.8;
+    opacity: 0.5;
+  }
+  .bike .hub {
+    fill: var(--ink);
+  }
+  .bike .seat {
+    stroke-width: 5;
+  }
+  .bike .basket {
+    stroke: var(--teal);
+  }
+  .bike .book {
+    fill: var(--saffron);
+    stroke: var(--ink);
+    stroke-width: 1.5;
+  }
+  .bike .flag {
+    fill: var(--saffron);
+  }
+  .bike__bell {
+    position: absolute;
+    right: -10px;
+    top: -18px;
+    font-size: 1.4rem;
+    color: var(--magenta);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .wheel {
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wheel {
+      animation: none;
+    }
+    .bike {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
+</style>
+
+<script>
+  import { animate } from 'animejs';
+  import { reducedMotion } from '../../scripts/motion';
+
+  const bike = document.querySelector<HTMLElement>('[data-bike]');
+  const road = bike?.parentElement;
+  if (bike && road && !reducedMotion()) {
+    const ride = () => {
+      const distance = road.clientWidth + bike.clientWidth;
+      return animate(bike, {
+        translateX: [-bike.clientWidth, distance - bike.clientWidth],
+        duration: Math.max(5000, distance * 6),
+        ease: 'linear',
+        loop: true,
+      });
+    };
+    let anim = ride();
+    window.addEventListener('resize', () => {
+      anim.revert();
+      anim = ride();
+    });
+    bike.addEventListener('click', () => {
+      // a little wheelie + bell
+      animate(bike.querySelector('svg')!, { rotate: [0, -12, 0], duration: 700, ease: 'outElastic(1, .5)' });
+      animate(bike.querySelector('.bike__bell')!, { opacity: [1, 0], translateY: [0, -20], duration: 900, ease: 'out(2)' });
+    });
+  }
+</script>

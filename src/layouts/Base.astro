@@ -1,0 +1,85 @@
+---
+import '../styles/global.css';
+import Analytics from '@vercel/analytics/astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description = "Diya Simha: UC Davis Political Science student working in operations, strategy, AI enablement and community leadership. Welcome to Diya's world. It's a little loud in here.",
+  image = '/og.jpg',
+  bodyClass,
+} = Astro.props;
+
+const fullTitle = title ? `${title} · Diya's World` : "Diya Simha · Diya's World";
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#FBF4E6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1A0B16" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Caveat:wght@500..700&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap"
+    />
+
+    <script is:inline>
+      // Apply the saved theme before paint (no flash), and switch on motion if allowed.
+      (function () {
+        var root = document.documentElement;
+        try {
+          var t = localStorage.getItem('dw-theme');
+          if (t === 'light' || t === 'dark') root.dataset.theme = t;
+        } catch (e) {}
+        if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          root.classList.add('js-motion');
+          // Safety net: never leave content hidden if scripts fail to load.
+          setTimeout(function () {
+            if (!window.__revealReady) root.classList.remove('js-motion');
+          }, 3000);
+        }
+      })();
+    </script>
+  </head>
+  <body class={bodyClass}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Nav />
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <Analytics />
+    <script>
+      import { initReveal } from '../scripts/motion';
+      initReveal();
+    </script>
+  </body>
+</html>

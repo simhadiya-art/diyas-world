@@ -1,0 +1,316 @@
+---
+import { Picture } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import LionMark from '../components/LionMark.astro';
+import headshot from '../assets/images/diya-headshot.jpg';
+
+// Free key from web3forms.com. Set PUBLIC_WEB3FORMS_KEY in .env (local) and in Vercel's settings.
+const accessKey = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
+---
+
+<Base title="The Mailroom" description="Write to Diya Simha. She reads everything and replies fast.">
+  <section class="mail wrap section">
+    <div class="mail__intro">
+      <p class="eyebrow" data-reveal>The Mailroom</p>
+      <h1 class="display mail__title" data-reveal>Write <span class="serif hl-magenta">to me.</span></h1>
+      <p class="lede" data-reveal>
+        Building something? Hiring? Want to argue about immigration policy or swap sewing patterns? The Mailroom is open, and I reply fast.
+      </p>
+      <div class="mail__direct" data-reveal>
+        <div class="mail__photo">
+          <Picture src={headshot} formats={['avif', 'webp']} widths={[160, 320]} sizes="140px" alt="Diya smiling in a grey blazer" loading="lazy" />
+        </div>
+        <ul class="mail__links">
+          <li>
+            <span class="eyebrow">Email</span>
+            <a href="mailto:simhadiya@gmail.com">simhadiya@gmail.com</a>
+          </li>
+          <li>
+            <span class="eyebrow">LinkedIn</span>
+            <a href="https://www.linkedin.com/in/diyasimha" target="_blank" rel="noopener">linkedin.com/in/diyasimha</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="letter-wrap" data-reveal>
+      <form class="letter" data-form data-key={accessKey} action="https://api.web3forms.com/submit" method="POST" novalidate>
+        <input type="hidden" name="access_key" value={accessKey} />
+        <input type="hidden" name="subject" value="New letter from Diya's World" />
+        <input type="hidden" name="from_name" value="Diya's World" />
+        <!-- honeypot: humans never see or fill this -->
+        <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <span class="letter__stamp" aria-hidden="true"><LionMark size={46} strokeWidth={2} /></span>
+        <p class="letter__to hand">To: Diya Simha<br />The Mailroom, Diya's World</p>
+
+        <label class="field">
+          <span>Your name</span>
+          <input name="name" type="text" autocomplete="name" required maxlength="120" />
+        </label>
+        <label class="field">
+          <span>Your email</span>
+          <input name="email" type="email" autocomplete="email" required maxlength="200" />
+        </label>
+        <label class="field">
+          <span>Your message</span>
+          <textarea name="message" rows="6" required maxlength="5000" placeholder="Dear Diya,"></textarea>
+        </label>
+
+        <p class="letter__error" data-error role="alert" hidden></p>
+        <button class="btn letter__send" type="submit" data-send>Send it <span class="arrow">→</span></button>
+      </form>
+
+      <div class="sent" data-sent hidden tabindex="-1">
+        <svg class="sent__env" viewBox="0 0 120 80" aria-hidden="true">
+          <rect x="4" y="4" width="112" height="72" rx="6"></rect>
+          <path d="M4 10 L60 46 L116 10"></path>
+        </svg>
+        <h2 class="sent__title">Delivered!</h2>
+        <p class="lede">Your letter just landed in my inbox. I'll write back soon, probably faster than you'd expect.</p>
+        <button type="button" class="btn btn--ghost" data-again>Write another</button>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .mail {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 5rem);
+  }
+  @media (min-width: 960px) {
+    .mail {
+      grid-template-columns: 1fr 1fr;
+      align-items: start;
+    }
+  }
+  .mail__title {
+    margin: 0.4rem 0 1.2rem;
+  }
+  .mail__direct {
+    display: flex;
+    gap: 1.2rem;
+    align-items: center;
+    margin-top: 2rem;
+  }
+  .mail__photo {
+    flex: none;
+    width: 110px;
+    border: 2.5px solid var(--ink);
+    border-radius: 50%;
+    overflow: hidden;
+    aspect-ratio: 1;
+    box-shadow: 4px 4px 0 var(--saffron);
+  }
+  .mail__photo :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .mail__links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.8rem;
+    min-width: 0;
+  }
+  .mail__links li {
+    display: grid;
+  }
+  .mail__links a {
+    font-weight: 700;
+    font-size: 1.1rem;
+    overflow-wrap: anywhere;
+    text-decoration-color: var(--saffron);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 4px;
+  }
+
+  .letter,
+  .sent {
+    position: relative;
+    background:
+      repeating-linear-gradient(transparent 0 33px, color-mix(in oklab, var(--teal) 22%, transparent) 33px 34px),
+      var(--bg-2);
+    border: 2.5px solid var(--ink);
+    border-radius: 6px;
+    padding: 2rem clamp(1.2rem, 4vw, 2.4rem) 2rem;
+    box-shadow: 10px 10px 0 var(--magenta);
+    rotate: 1deg;
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+  }
+  .letter__stamp {
+    position: absolute;
+    right: 1.2rem;
+    top: 1.2rem;
+    width: 70px;
+    height: 84px;
+    display: grid;
+    place-items: center;
+    color: var(--magenta);
+    border: 2px dashed var(--magenta);
+    background: color-mix(in oklab, var(--saffron) 25%, var(--bg));
+    rotate: 6deg;
+  }
+  .letter__to {
+    font-size: 1.5rem;
+    line-height: 1.15;
+    margin-bottom: 1.6rem;
+    color: var(--muted);
+    padding-right: 90px;
+  }
+  .field {
+    display: grid;
+    gap: 0.35rem;
+    margin-bottom: 1.2rem;
+  }
+  .field span {
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .field input,
+  .field textarea {
+    font: inherit;
+    color: var(--ink);
+    background: var(--bg);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    transition:
+      box-shadow 0.2s,
+      transform 0.2s var(--spring);
+  }
+  .field textarea {
+    resize: vertical;
+    font-family: var(--font-hand);
+    font-size: 1.45rem;
+    line-height: 1.3;
+  }
+  .field input:focus,
+  .field textarea:focus {
+    outline: none;
+    box-shadow: 4px 4px 0 var(--saffron);
+    transform: translate(-2px, -2px);
+  }
+  .field input[aria-invalid='true'],
+  .field textarea[aria-invalid='true'] {
+    border-color: var(--magenta);
+    box-shadow: 4px 4px 0 var(--magenta);
+  }
+  .letter__error {
+    color: var(--magenta);
+    font-weight: 700;
+  }
+  .letter__send[disabled] {
+    opacity: 0.85;
+    cursor: progress;
+  }
+  .sent {
+    text-align: center;
+    display: grid;
+    justify-items: center;
+    gap: 0.8rem;
+  }
+  .sent__env {
+    width: 120px;
+  }
+  .sent__env rect,
+  .sent__env path {
+    fill: none;
+    stroke: var(--magenta);
+    stroke-width: 3;
+    stroke-linejoin: round;
+  }
+  .sent__title {
+    font-size: clamp(2.8rem, 8vw, 4.5rem);
+  }
+</style>
+
+<script>
+  import { animate } from 'animejs';
+  import { reducedMotion } from '../scripts/motion';
+
+  const form = document.querySelector<HTMLFormElement>('[data-form]')!;
+  const sent = document.querySelector<HTMLElement>('[data-sent]')!;
+  const error = form.querySelector<HTMLElement>('[data-error]')!;
+  const send = form.querySelector<HTMLButtonElement>('[data-send]')!;
+  const key = form.dataset.key;
+  const loadingLines = ['Licking the stamp…', 'Finding a pigeon…', 'Asking the lion to deliver it…', 'Almost there…'];
+
+  const showError = (msg: string) => {
+    error.textContent = msg;
+    error.hidden = false;
+  };
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    error.hidden = true;
+
+    // friendly validation
+    let firstBad: HTMLInputElement | HTMLTextAreaElement | null = null;
+    form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[required], textarea[required]').forEach((el) => {
+      const ok = el.checkValidity() && el.value.trim() !== '';
+      el.setAttribute('aria-invalid', String(!ok));
+      if (!ok && !firstBad) firstBad = el;
+    });
+    if (firstBad) {
+      (firstBad as HTMLElement).focus();
+      showError("Almost! Fill in your name, a real email, and a message so I can write back.");
+      return;
+    }
+
+    const data = new FormData(form);
+    if (data.get('botcheck')) return; // a bot filled the honeypot
+
+    if (!key) {
+      // Form service not connected yet: fall back to the visitor's email app.
+      const body = `${data.get('message')}\n\n— ${data.get('name')} (${data.get('email')})`;
+      location.href = `mailto:simhadiya@gmail.com?subject=${encodeURIComponent("Hello from Diya's World")}&body=${encodeURIComponent(body)}`;
+      return;
+    }
+
+    send.disabled = true;
+    let i = 0;
+    send.textContent = loadingLines[0];
+    const ticker = setInterval(() => (send.textContent = loadingLines[++i % loadingLines.length]), 900);
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+        body: data,
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) throw new Error(json.message || 'Send failed');
+      clearInterval(ticker);
+      if (!reducedMotion()) {
+        await animate(form, { rotate: [1, -8], translateY: [0, -40], scale: [1, 0.6], opacity: [1, 0], duration: 500, ease: 'in(3)' });
+      }
+      form.hidden = true;
+      sent.hidden = false;
+      sent.focus();
+      if (!reducedMotion()) {
+        animate(sent, { scale: [0.6, 1], rotate: [-6, 1], opacity: [0, 1], duration: 700, ease: 'outElastic(1, .6)' });
+        animate(sent.querySelector('.sent__env')!, { translateY: [0, -12, 0], rotate: [0, -8, 6, 0], duration: 1200, ease: 'inOut(2)', loop: 2 });
+      }
+    } catch {
+      clearInterval(ticker);
+      showError("The pigeon got lost. Please try again, or email me directly at simhadiya@gmail.com.");
+    } finally {
+      send.disabled = false;
+      send.innerHTML = 'Send it <span class="arrow">→</span>';
+    }
+  });
+
+  document.querySelector('[data-again]')!.addEventListener('click', () => {
+    form.reset();
+    form.style.cssText = '';
+    form.hidden = false;
+    sent.hidden = true;
+    form.querySelector('input[name="name"]')?.focus();
+  });
+</script>

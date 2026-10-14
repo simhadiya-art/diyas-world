@@ -1,0 +1,35 @@
+---
+// A square pulli kolam: a diamond of dots, each wrapped in a looping petal.
+// Used as an illustrated placeholder wherever there is no photo yet.
+interface Props {
+  size?: number;
+  rings?: number;
+  class?: string;
+  color?: string;
+  dotColor?: string;
+}
+const { size = 240, rings = 3, class: className, color = 'currentColor', dotColor } = Astro.props;
+const gap = 24;
+const c = 120;
+const dots: [number, number][] = [];
+for (let r = -rings; r <= rings; r++) {
+  const span = rings - Math.abs(r);
+  for (let k = -span; k <= span; k++) dots.push([c + k * gap, c + r * gap]);
+}
+const h = gap / 2;
+// rounded diamond around each dot
+const loop = ([x, y]: [number, number]) =>
+  `M${x} ${y - h} Q${x + h * 1.25} ${y - h * 1.25} ${x + h} ${y} Q${x + h * 1.25} ${y + h * 1.25} ${x} ${y + h} Q${x - h * 1.25} ${y + h * 1.25} ${x - h} ${y} Q${x - h * 1.25} ${y - h * 1.25} ${x} ${y - h}Z`;
+const outer = rings * gap + gap;
+const ringPath = `M${c} ${c - outer} Q${c + outer} ${c - outer} ${c + outer} ${c} Q${c + outer} ${c + outer} ${c} ${c + outer} Q${c - outer} ${c + outer} ${c - outer} ${c} Q${c - outer} ${c - outer} ${c} ${c - outer}Z`;
+const tips = [0, 90, 180, 270].map(
+  (a) => `<g transform="rotate(${a} ${c} ${c})"><path d="M${c} ${c - outer} C${c - 14} ${c - outer - 20} ${c + 14} ${c - outer - 20} ${c} ${c - outer}" /></g>`,
+);
+---
+
+<svg class:list={['kolam', className]} viewBox="0 0 240 240" width={size} height={size} fill="none" stroke={color} stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+  <path d={ringPath} data-draw></path>
+  <Fragment set:html={tips.join('')} />
+  {dots.map((d) => <path d={loop(d)} data-draw />)}
+  {dots.map(([x, y]) => <circle cx={x} cy={y} r="2.4" fill={dotColor ?? color} stroke="none" />)}
+</svg>

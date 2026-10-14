@@ -1,0 +1,41 @@
+---
+// A strip of kolam: a row of dots with two lines weaving around them.
+interface Props {
+  color?: string;
+  units?: number;
+}
+const { color = 'var(--magenta)', units = 48 } = Astro.props;
+const step = 36;
+const mid = 22;
+const amp = 17;
+const weave = (dir: number) => {
+  let d = `M0 ${mid}`;
+  for (let i = 0; i < units; i++) {
+    const x = i * step;
+    d += ` Q${x + step / 2} ${mid + dir * amp * (i % 2 ? -1 : 1)} ${x + step} ${mid}`;
+  }
+  return d;
+};
+const dots = Array.from({ length: units }, (_, i) => i * step + step / 2);
+---
+
+<div class="kolam-border" aria-hidden="true">
+  <svg viewBox={`0 0 ${units * step} 44`} width={units * step} height="44" fill="none" stroke={color} stroke-width="2" stroke-linecap="round">
+    <path d={weave(1)} data-draw></path>
+    <path d={weave(-1)} data-draw></path>
+    {dots.map((x) => <circle cx={x} cy={mid} r="2.6" fill={color} stroke="none" />)}
+  </svg>
+</div>
+
+<style>
+  .kolam-border {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    opacity: 0.85;
+  }
+  .kolam-border svg {
+    flex: none;
+    max-width: none;
+  }
+</style>

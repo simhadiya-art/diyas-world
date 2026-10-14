@@ -1,0 +1,28 @@
+{
+  "name": "diyas-world",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Diya Simha's personal website. It's a little loud in here.",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "images": "node scripts/prepare-images.mjs"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1",
+    "animejs": "^4.5.0",
+    "astro": "^7.3.8",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "^3.1.1",
+    "@types/topojson-client": "^3.1.5",
+    "d3-geo": "^3.1.1",
+    "topojson-client": "^3.1.0",
+    "topojson-simplify": "^3.0.3",
+    "us-atlas": "^3.0.1",
+    "world-atlas": "^2.0.2"
+  }
+}

@@ -1,0 +1,519 @@
+---
+import { getCollection } from 'astro:content';
+import { Picture } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import LionMark from '../components/LionMark.astro';
+import KolamBorder from '../components/KolamBorder.astro';
+import Door from '../components/Door.astro';
+import headshot from '../assets/images/diya-headshot.jpg';
+
+const places = (await getCollection('places')).sort((a, b) => a.data.order - b.data.order);
+const projects = await getCollection('projects');
+const featured = projects.sort((a, b) => a.data.order - b.data.order)[0];
+
+const doors = [
+  { href: '/map', name: 'The Map Room', line: 'Five cities, one dotted line, a lot of carry-on luggage.', color: 'teal', symbol: 'map' },
+  { href: '/mailroom', name: 'The Mailroom', line: 'Where you write to me. I write back. Usually fast.', color: 'saffron', symbol: 'mail' },
+  { name: 'The Studio', line: 'Sewing and sketchbooks. Currently pinned together with safety pins.', color: 'magenta', symbol: 'needle' },
+  { name: 'The Dance Floor', line: 'Rehearsing. Please do not look directly at the choreography yet.', color: 'saffron', symbol: 'music' },
+  { name: 'The Deep End', line: 'Swimming. Still filling the pool. Bring goggles.', color: 'teal', symbol: 'wave' },
+  { name: 'Character Profile', line: 'Fun facts, strong opinions and one very good dosa recommendation.', color: 'magenta', symbol: 'star' },
+] as const;
+---
+
+<Base>
+  <!-- First-visit intro: the lion draws itself, then the world opens. -->
+  <div class="intro" id="intro" aria-hidden="true">
+    <div class="intro__lion"><LionMark size={220} strokeWidth={1.6} /></div>
+    <p class="intro__line serif">entering Diya's world…</p>
+    <button class="intro__skip" type="button" data-skip-intro>Skip intro →</button>
+  </div>
+  <script is:inline>
+    try {
+      if (!localStorage.getItem('dw-intro') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        document.documentElement.classList.add('show-intro');
+      }
+    } catch (e) {}
+  </script>
+
+  <section class="hero" aria-labelledby="hero-title">
+    <canvas class="hero__field" aria-hidden="true"></canvas>
+    <div class="hero__copy wrap">
+      <p class="eyebrow hero__eyebrow"><span class="dot"></span> Diya Simha · UC Davis · Operations, strategy & AI</p>
+      <h1 id="hero-title" class="display hero__title">
+        <span class="line">Welcome to</span>
+        <span class="line"><span class="hl-magenta">Diya's</span> world.</span>
+      </h1>
+      <p class="hero__sub serif">It's a little loud in here.</p>
+      <p class="hero__hint hand" aria-hidden="true">wiggle your cursor around ↗ (or tap, on a phone)</p>
+    </div>
+    <a class="hero__scroll" href="#hello" aria-label="Scroll to introduction">
+      <span>scroll</span>
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 4v16m-6-6 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </a>
+  </section>
+
+  <section class="hello section" id="hello">
+    <div class="wrap hello__grid">
+      <div class="hello__photo" data-reveal>
+        <div class="polaroid">
+          <Picture src={headshot} formats={['avif', 'webp']} widths={[320, 520]} sizes="(min-width: 860px) 360px, 70vw" alt="Diya smiling in a grey blazer against a stone wall" loading="lazy" />
+          <p class="hand polaroid__cap">hi, it's me ↑</p>
+        </div>
+        <div class="stickers" aria-hidden="true">
+          <span class="sticker sticker--saffron" data-sticker>est. Bangalore</span>
+          <span class="sticker sticker--magenta" data-sticker>Poli Sci + Business</span>
+          <span class="sticker sticker--teal" data-sticker>will sew you a tote</span>
+        </div>
+      </div>
+      <div class="hello__text">
+        <p class="eyebrow" data-reveal>The short version</p>
+        <h2 class="h2" data-reveal>Driven. Passionate. <span class="serif hl-magenta">A little extra.</span></h2>
+        <div data-reveal>
+          <p class="lede">
+            I'm Diya, a Political Science student (Business minor) at UC Davis who loves making messy, important things run smoothly.
+          </p>
+          <p>
+            I work in operations, strategy, AI enablement and community leadership. I've led 60-person volunteer teams, untangled federal immigration backlogs with
+            an eight-person consulting team, and taught 300+ people how to actually use AI at work. Off the clock I sew, draw, dance and swim, usually not at the
+            same time.
+          </p>
+          <p class="hand hello__note">(psst: the stickers are draggable)</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      {
+        [0, 1].map(() => (
+          <span>
+            {places.map((p) => (
+              <>
+                {p.data.name} <i>✺</i>{' '}
+              </>
+            ))}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+
+  <section class="doors section" aria-labelledby="doors-title">
+    <div class="wrap">
+      <p class="eyebrow" data-reveal>Rooms</p>
+      <h2 id="doors-title" class="h2" data-reveal>Pick a door.</h2>
+      <p class="muted doors__sub" data-reveal>Some are open. Some are still being painted.</p>
+      <ul class="doors__grid" data-reveal data-reveal-stagger>
+        {doors.map((d) => <Door {...d} />)}
+      </ul>
+    </div>
+  </section>
+
+  {
+    featured && (
+      <section class="featured section" aria-labelledby="featured-title">
+        <div class="wrap">
+          <p class="eyebrow" data-reveal>Case file #1</p>
+          <a class="featured__card paper" href={`/projects/${featured.id}`} data-reveal>
+            <div class="featured__img">
+              <Picture src={featured.data.cover.src} formats={['avif', 'webp']} widths={[480, 800, 1200]} sizes="(min-width: 860px) 55vw, 100vw" alt={featured.data.cover.alt} loading="lazy" />
+            </div>
+            <div class="featured__body">
+              <p class="eyebrow">{featured.data.kicker}</p>
+              <h2 id="featured-title" class="featured__title">{featured.data.title}</h2>
+              <p>{featured.data.summary}</p>
+              <span class="btn btn--ghost">
+                Open the case file <span class="arrow">→</span>
+              </span>
+            </div>
+          </a>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="sayhi section" aria-labelledby="sayhi-title">
+    <KolamBorder color="var(--saffron)" />
+    <div class="wrap sayhi__inner" data-reveal>
+      <h2 id="sayhi-title" class="display sayhi__title">Say <span class="serif hl-magenta">hi.</span></h2>
+      <p class="lede">Founder, recruiter, fellow over-committer? I'd love to hear from you.</p>
+      <a class="btn" href="/mailroom">Write to the Mailroom <span class="arrow">→</span></a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---------- intro ---------- */
+  .intro {
+    display: none;
+  }
+  :global(.show-intro) .intro {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 1rem;
+    background: var(--bg);
+    color: var(--magenta);
+  }
+  .intro__line {
+    font-size: 1.6rem;
+    color: var(--ink);
+    margin: 0;
+  }
+  .intro__skip {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    background: none;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    position: relative;
+    min-height: calc(100svh - 68px);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    touch-action: pan-y;
+    isolation: isolate;
+  }
+  .hero__field {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+  .hero__copy {
+    padding-bottom: clamp(4rem, 12vh, 8rem);
+    pointer-events: none;
+  }
+  .hero__eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1.2rem;
+    color: var(--ink);
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--saffron);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--saffron) 30%, transparent);
+  }
+  .hero__title {
+    font-size: clamp(3.4rem, 13vw, 11.5rem);
+  }
+  .hero__title .line {
+    display: block;
+  }
+  .hero__sub {
+    font-size: clamp(2rem, 5.5vw, 4.6rem);
+    margin: 0.4rem 0 0;
+    color: var(--teal);
+  }
+  .hero__hint {
+    margin-top: 1.4rem;
+    font-size: 1.3rem;
+    color: var(--muted);
+  }
+  .hero__scroll {
+    position: absolute;
+    right: var(--gutter);
+    bottom: 2rem;
+    display: grid;
+    justify-items: center;
+    gap: 0.2rem;
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    animation: bob 2s ease-in-out infinite;
+  }
+  @keyframes bob {
+    50% {
+      transform: translateY(6px);
+    }
+  }
+  @media (max-width: 759px) {
+    .hero {
+      align-items: flex-end;
+    }
+    .hero__hint {
+      display: none;
+    }
+  }
+
+  /* ---------- hello ---------- */
+  .hello__grid {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 5rem);
+    align-items: center;
+  }
+  @media (min-width: 860px) {
+    .hello__grid {
+      grid-template-columns: 0.8fr 1.2fr;
+    }
+  }
+  .hello__photo {
+    position: relative;
+    justify-self: center;
+    width: min(100%, 360px);
+  }
+  .polaroid {
+    background: #fffdf7;
+    padding: 12px 12px 0;
+    border: 2px solid var(--ink);
+    box-shadow: 8px 8px 0 var(--magenta);
+    transform: rotate(-3deg);
+  }
+  .polaroid :global(img) {
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    width: 100%;
+  }
+  .polaroid__cap {
+    color: #1f1420;
+    font-size: 1.5rem;
+    text-align: center;
+    margin: 0.3rem 0 0.4rem;
+  }
+  .stickers {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .sticker {
+    position: absolute;
+    pointer-events: auto;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 2px solid var(--ink);
+    font-weight: 700;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .sticker--saffron {
+    background: var(--saffron);
+    color: var(--on-saffron);
+    top: -14px;
+    right: -18px;
+    rotate: 8deg;
+  }
+  .sticker--magenta {
+    background: var(--magenta);
+    color: #fff;
+    bottom: 22%;
+    left: -28px;
+    rotate: -7deg;
+  }
+  .sticker--teal {
+    background: var(--teal);
+    color: #fff;
+    bottom: -14px;
+    right: -6px;
+    rotate: 4deg;
+  }
+  .hello__note {
+    font-size: 1.35rem;
+    color: var(--teal);
+  }
+  .hello__text .h2 {
+    margin: 0.4rem 0 1.4rem;
+  }
+
+  /* ---------- marquee ---------- */
+  .marquee {
+    border-block: 2.5px solid var(--ink);
+    background: var(--saffron);
+    color: var(--on-saffron);
+    overflow: hidden;
+    padding: 0.7rem 0;
+    rotate: -1.5deg;
+    margin-inline: -2rem;
+  }
+  .marquee__track {
+    display: flex;
+    width: max-content;
+    animation: marquee 28s linear infinite;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.8rem, 5vw, 3.6rem);
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .marquee__track span {
+    padding-right: 1rem;
+  }
+  .marquee i {
+    font-style: normal;
+    color: var(--magenta);
+    margin: 0 0.6rem;
+  }
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* ---------- doors ---------- */
+  .doors__sub {
+    margin-top: 0.8rem;
+  }
+  .doors__grid {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: 1.4rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  }
+
+  /* ---------- featured ---------- */
+  .featured__card {
+    display: grid;
+    margin-top: 1rem;
+    text-decoration: none;
+    overflow: hidden;
+    box-shadow: 8px 8px 0 var(--teal);
+    transition:
+      transform 0.35s var(--spring),
+      box-shadow 0.35s var(--spring);
+  }
+  .featured__card:hover {
+    transform: translate(-3px, -3px) rotate(-0.5deg);
+    box-shadow: 12px 12px 0 var(--teal);
+  }
+  @media (min-width: 860px) {
+    .featured__card {
+      grid-template-columns: 1.15fr 1fr;
+    }
+  }
+  .featured__img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .featured__body {
+    padding: clamp(1.4rem, 3vw, 2.6rem);
+    display: grid;
+    align-content: center;
+    gap: 0.4rem;
+  }
+  .featured__title {
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    margin-bottom: 0.6rem;
+  }
+  .featured__body .btn {
+    justify-self: start;
+    margin-top: 0.6rem;
+  }
+
+  /* ---------- say hi ---------- */
+  .sayhi__inner {
+    text-align: center;
+    display: grid;
+    justify-items: center;
+    gap: 1rem;
+    padding-top: 3rem;
+  }
+  .sayhi__title {
+    font-size: clamp(4rem, 16vw, 12rem);
+  }
+</style>
+
+<script>
+  import { animate, stagger, createTimeline, createDraggable, svg, splitText } from 'animejs';
+  import { initHeroField } from '../scripts/hero-field';
+  import { reducedMotion } from '../scripts/motion';
+
+  const reduced = reducedMotion();
+  const canvas = document.querySelector<HTMLCanvasElement>('.hero__field')!;
+  const field = initHeroField(canvas, { reduced });
+
+  function heroEntrance() {
+    if (reduced) return;
+    const { chars } = splitText('.hero__title', { chars: true, accessible: true });
+    animate(chars, {
+      translateY: ['110%', '0%'],
+      rotate: [stagger([-12, 12]), 0],
+      opacity: [0, 1],
+      duration: 650,
+      delay: stagger(22),
+      ease: 'outElastic(1, .7)',
+    });
+    animate(['.hero__eyebrow', '.hero__sub', '.hero__hint'], {
+      opacity: [0, 1],
+      translateY: [20, 0],
+      delay: stagger(120, { start: 350 }),
+      duration: 600,
+      ease: 'out(4)',
+    });
+    field.ripple(canvas.clientWidth * 0.7, canvas.clientHeight * 0.5);
+  }
+
+  // ----- first-visit intro (< 2s, skippable, never replays) -----
+  const root = document.documentElement;
+  const intro = document.getElementById('intro')!;
+  if (root.classList.contains('show-intro')) {
+    try {
+      localStorage.setItem('dw-intro', '1');
+    } catch {}
+    const lion = intro.querySelector('svg')!;
+    const drawables = svg.createDrawable(lion.querySelectorAll('path'));
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      tl.pause();
+      animate(intro, {
+        opacity: [1, 0],
+        scale: [1, 1.08],
+        duration: 380,
+        ease: 'in(2)',
+        onComplete: () => {
+          root.classList.remove('show-intro');
+          heroEntrance();
+        },
+      });
+    };
+    const tl = createTimeline({ onComplete: finish })
+      .add(drawables, { draw: ['0 0', '0 1'], duration: 900, delay: stagger(18), ease: 'inOut(2)' })
+      .add('.intro__line', { opacity: [0, 1], translateY: [10, 0], duration: 300 }, 200)
+      .add(lion, { scale: [1, 1.12, 1], duration: 350, ease: 'outElastic(1, .5)' });
+    intro.querySelector('[data-skip-intro]')!.addEventListener('click', finish);
+    window.addEventListener('keydown', finish, { once: true });
+  } else {
+    heroEntrance();
+  }
+
+  // ----- draggable stickers -----
+  if (!reduced) {
+    document.querySelectorAll<HTMLElement>('[data-sticker]').forEach((el) => {
+      createDraggable(el, {
+        container: document.body,
+        releaseStiffness: 120,
+        releaseDamping: 8,
+        onGrab: (d) => animate(d.$target, { scale: 1.15, duration: 200 }),
+        onRelease: (d) => animate(d.$target, { scale: 1, duration: 400, ease: 'outElastic(1, .4)' }),
+      });
+    });
+  }
+</script>

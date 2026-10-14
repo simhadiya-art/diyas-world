@@ -1,0 +1,313 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import { Picture } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Gallery from '../../components/Gallery.astro';
+import ExperienceCard from '../../components/ExperienceCard.astro';
+import Reflection from '../../components/Reflection.astro';
+import KolamBorder from '../../components/KolamBorder.astro';
+import Chalkboard from '../../components/heroes/Chalkboard.astro';
+import Bike from '../../components/heroes/Bike.astro';
+import Dome from '../../components/heroes/Dome.astro';
+import Capitol from '../../components/heroes/Capitol.astro';
+import SwipeCard from '../../components/heroes/SwipeCard.astro';
+import PlainHero from '../../components/heroes/PlainHero.astro';
+
+export async function getStaticPaths() {
+  const places = (await getCollection('places')).sort((a, b) => a.data.order - b.data.order);
+  return places.map((place, i) => ({
+    params: { id: place.id },
+    props: { place, prev: places[i - 1], next: places[i + 1] },
+  }));
+}
+
+interface Props {
+  place: CollectionEntry<'places'>;
+  prev?: CollectionEntry<'places'>;
+  next?: CollectionEntry<'places'>;
+}
+const { place, prev, next } = Astro.props;
+const { Content } = await render(place);
+
+const experiences = (await getCollection('experiences', (e) => e.data.place.id === place.id)).sort((a, b) => b.data.start.localeCompare(a.data.start));
+const projects = (await getCollection('projects', (p) => p.data.place.id === place.id)).sort((a, b) => a.data.order - b.data.order);
+const reflections = await Promise.all(
+  experiences.map(async (e) => ({ entry: e, Content: (await render(e)).Content, empty: !e.body?.trim() })),
+);
+const heroes = { chalkboard: Chalkboard, bike: Bike, dome: Dome, capitol: Capitol, card: SwipeCard, none: PlainHero };
+const Hero = heroes[place.data.signature];
+---
+
+<Base title={place.data.name} description={`${place.data.name}: ${place.data.summary}`}>
+  <article class={`place accent-${place.data.accent}`}>
+    <Hero place={place} experiences={experiences} />
+
+    <section class="wrap place__intro section">
+      <p class="eyebrow" data-reveal>{place.data.region} · {place.data.years}</p>
+      <div class="place__intro-text lede" data-reveal><Content /></div>
+      {
+        place.data.threeWords && (
+          <p class="place__three" data-reveal>
+            <span class="hand">{place.data.name} in three words:</span>
+            {place.data.threeWords.map((w) => (
+              <span class="place__word">{w}.</span>
+            ))}
+          </p>
+        )
+      }
+    </section>
+
+    <section class="wrap section place__exp" aria-labelledby="exp-title">
+      <h2 id="exp-title" class="h2" data-reveal>What I <span class="serif">did here.</span></h2>
+      <div class="place__exp-list">
+        {experiences.map((e) => <ExperienceCard entry={e} />)}
+      </div>
+    </section>
+
+    {
+      projects.length > 0 && (
+        <section class="wrap section place__projects" aria-labelledby="proj-title">
+          <h2 id="proj-title" class="h2" data-reveal>
+            Projects <span class="serif">worth opening.</span>
+          </h2>
+          <ul class="projects">
+            {projects.map((p) => (
+              <li data-reveal>
+                <a class="project paper" href={`/projects/${p.id}`}>
+                  <div class="project__img">
+                    <Picture src={p.data.cover.src} formats={['avif', 'webp']} widths={[480, 900]} sizes="(min-width: 860px) 50vw, 100vw" alt={p.data.cover.alt} loading="lazy" />
+                  </div>
+                  <div class="project__body">
+                    <p class="eyebrow">{p.data.kicker}</p>
+                    <h3 class="project__title">{p.data.title}</h3>
+                    <p>{p.data.summary}</p>
+                    {p.data.stats.length > 0 && (
+                      <ul class="project__stats">
+                        {p.data.stats.slice(0, 3).map((s) => (
+                          <li>
+                            <strong>{s.value}</strong>
+                            <span>{s.label}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <span class="btn btn--ghost">
+                      Open the case file <span class="arrow">→</span>
+                    </span>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <section class="section place__gallery" aria-labelledby="gal-title">
+      <div class="wrap">
+        <h2 id="gal-title" class="h2" data-reveal>The <span class="serif">camera roll.</span></h2>
+      </div>
+      <Gallery photos={[...place.data.gallery, ...experiences.flatMap((e) => e.data.images)]} placeName={place.data.name} />
+    </section>
+
+    <section class="section place__reflect" aria-labelledby="ref-title">
+      <div class="wrap">
+        <h2 id="ref-title" class="h2" data-reveal>Beyond <span class="serif">the bullet points.</span></h2>
+        <p class="muted" data-reveal>Reflections from the journal: what happened, and what it changed.</p>
+        <div class="journal">
+          {reflections.map(({ entry, Content, empty }) => (
+            <Reflection entry={entry} empty={empty}>
+              <Content />
+            </Reflection>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <KolamBorder />
+    <nav class="wrap place__nav" aria-label="Journey">
+      {
+        prev ? (
+          <a href={`/places/${prev.id}`} class="place__nav-link">
+            <span class="eyebrow">← Previous stop</span>
+            <span class="place__nav-name">{prev.data.name}</span>
+          </a>
+        ) : (
+          <a href="/map" class="place__nav-link">
+            <span class="eyebrow">← Back to</span>
+            <span class="place__nav-name">The Map Room</span>
+          </a>
+        )
+      }
+      {
+        next ? (
+          <a href={`/places/${next.id}`} class="place__nav-link place__nav-link--next">
+            <span class="eyebrow">Next stop →</span>
+            <span class="place__nav-name">{next.data.name}</span>
+          </a>
+        ) : (
+          <a href="/mailroom" class="place__nav-link place__nav-link--next">
+            <span class="eyebrow">Last stop (so far) →</span>
+            <span class="place__nav-name">Say hi</span>
+          </a>
+        )
+      }
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .place {
+    --c: var(--magenta);
+  }
+  .place.accent-saffron {
+    --c: var(--saffron);
+  }
+  .place.accent-teal {
+    --c: var(--teal);
+  }
+  .place__intro {
+    padding-bottom: 0;
+  }
+  .place__intro-text {
+    max-width: 48ch;
+    margin-top: 0.8rem;
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.8rem);
+  }
+  .place__three {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 1rem;
+    margin-top: 1.6rem;
+  }
+  .place__three .hand {
+    font-size: 1.5rem;
+    color: var(--muted);
+    width: 100%;
+  }
+  .place__word {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.2rem, 6vw, 4.2rem);
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .place__word:nth-of-type(2) {
+    color: var(--magenta);
+  }
+  .place__word:nth-of-type(3) {
+    color: var(--teal);
+  }
+  .place__exp-list {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2.5rem;
+  }
+  .projects {
+    list-style: none;
+    padding: 0;
+    margin: 2.5rem 0 0;
+    display: grid;
+    gap: 2rem;
+  }
+  .project {
+    display: grid;
+    text-decoration: none;
+    overflow: hidden;
+    box-shadow: 8px 8px 0 var(--teal);
+    transition:
+      transform 0.35s var(--spring),
+      box-shadow 0.35s var(--spring);
+  }
+  .project:hover {
+    transform: translate(-3px, -3px) rotate(-0.4deg);
+    box-shadow: 12px 12px 0 var(--teal);
+  }
+  @media (min-width: 860px) {
+    .project {
+      grid-template-columns: 1.1fr 1fr;
+    }
+  }
+  .project__img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .project__body {
+    padding: clamp(1.3rem, 3vw, 2.4rem);
+    display: grid;
+    gap: 0.5rem;
+    align-content: center;
+  }
+  .project__title {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+  }
+  .project__stats {
+    list-style: none;
+    padding: 0;
+    margin: 0.4rem 0;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+  }
+  .project__stats li {
+    display: grid;
+    border-top: 2px solid var(--ink);
+    padding-top: 0.4rem;
+  }
+  .project__stats strong {
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    color: var(--magenta);
+    line-height: 1;
+  }
+  .project__stats span {
+    font-size: 0.8rem;
+    line-height: 1.3;
+    color: var(--muted);
+  }
+  .project .btn {
+    justify-self: start;
+  }
+  .place__gallery .h2,
+  .place__reflect .h2 {
+    margin-bottom: 1rem;
+  }
+  .journal {
+    display: grid;
+    gap: 2rem;
+    margin-top: 2.4rem;
+  }
+  @media (min-width: 900px) {
+    .journal {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .place__nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 2.5rem 0;
+  }
+  .place__nav-link {
+    display: grid;
+    text-decoration: none;
+    gap: 0.2rem;
+  }
+  .place__nav-link--next {
+    text-align: right;
+    margin-left: auto;
+  }
+  .place__nav-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.8rem, 6vw, 4rem);
+    letter-spacing: -0.04em;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .place__nav-link:hover .place__nav-name {
+    color: var(--magenta);
+  }
+</style>

@@ -1,0 +1,515 @@
+---
+// The illustrated map: lower-48 US with an India inset, styled pins, a NorCal cluster
+// that splits in two, and a dotted journey line that draws itself in journey order.
+import type { CollectionEntry } from 'astro:content';
+import { getMap, project, MAP_W, MAP_H, INSET } from '../lib/geo';
+
+interface Props {
+  places: CollectionEntry<'places'>[];
+}
+const { places } = Astro.props;
+const map = getMap();
+
+type PinPlace = { id: string; name: string; region: string; years: string; summary: string; accent: string; x: number; y: number };
+type Pin = { key: string; label: string; x: number; y: number; order: number; places: PinPlace[] };
+
+const pins: Pin[] = [];
+for (const p of [...places].sort((a, b) => a.data.order - b.data.order)) {
+  const [x, y] = project(p.data.coords, p.data.map);
+  const pp: PinPlace = { id: p.id, name: p.data.name, region: p.data.region, years: p.data.years, summary: p.data.summary, accent: p.data.accent, x, y };
+  const key = p.data.cluster ?? p.id;
+  const existing = pins.find((pin) => pin.key === key);
+  if (existing) existing.places.push(pp);
+  else pins.push({ key, label: p.data.cluster ?? p.data.name, x, y, order: p.data.order, places: [pp] });
+}
+for (const pin of pins) {
+  pin.x = pin.places.reduce((s, p) => s + p.x, 0) / pin.places.length;
+  pin.y = pin.places.reduce((s, p) => s + p.y, 0) / pin.places.length;
+}
+// spread clustered places apart (west → east) for when the cluster opens
+for (const pin of pins.filter((p) => p.places.length > 1)) {
+  const sorted = [...pin.places].sort((a, b) => a.x - b.x);
+  const spread = 46;
+  sorted.forEach((p, i) => {
+    const t = i - (sorted.length - 1) / 2;
+    (p as any).dx = t * spread;
+    (p as any).dy = -t * 26;
+  });
+}
+
+// Journey line: gentle arcs between consecutive pins.
+let journey = '';
+pins.forEach((pin, i) => {
+  if (i === 0) {
+    journey = `M${pin.x} ${pin.y}`;
+    return;
+  }
+  const prev = pins[i - 1];
+  const mx = (prev.x + pin.x) / 2;
+  const my = (prev.y + pin.y) / 2;
+  const dist = Math.hypot(pin.x - prev.x, pin.y - prev.y);
+  // The long India → US hop flies over the top of the map; later hops alternate up and down.
+  const cy = prev.x > MAP_W * 0.75 || pin.x > MAP_W * 0.75 ? 0 : my - Math.min(160, dist * 0.22) * (i % 2 ? -1 : 1);
+  journey += ` Q${mx.toFixed(1)} ${cy.toFixed(1)} ${pin.x.toFixed(1)} ${pin.y.toFixed(1)}`;
+});
+
+const PIN = 'M0 0 C-5 -9 -13 -14 -13 -24 A13 13 0 1 1 13 -24 C13 -14 5 -9 0 0Z';
+---
+
+<div class="jmap" data-jmap>
+  <svg class="jmap__svg" viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="img" aria-labelledby="jmap-title jmap-desc">
+    <title id="jmap-title">Map of Diya's journey</title>
+    <desc id="jmap-desc">
+      {pins.map((p, i) => `${i + 1}. ${p.places.map((pp) => pp.name).join(' and ')}`).join(', ')}. A list version follows the map.
+    </desc>
+    <defs>
+      <filter id="rough" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"></feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"></feDisplacementMap>
+      </filter>
+      <pattern id="ocean-dots" width="18" height="18" patternUnits="userSpaceOnUse">
+        <circle cx="9" cy="9" r="1.1" class="jmap__oceandot"></circle>
+      </pattern>
+      <mask id="journey-mask" maskUnits="userSpaceOnUse">
+        <path d={journey} class="jmap__reveal" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"></path>
+      </mask>
+    </defs>
+
+    <rect width={MAP_W} height={MAP_H} fill="url(#ocean-dots)"></rect>
+
+    <!-- USA -->
+    <g filter="url(#rough)">
+      <path d={map.us} class="jmap__land-shadow" transform="translate(5 6)"></path>
+      <path d={map.us} class="jmap__land"></path>
+      <path d={map.usBorders} class="jmap__borders"></path>
+    </g>
+    <text x="300" y="380" class="jmap__country">U.S.A.</text>
+
+    <!-- India inset, as a postcard pinned to the corner -->
+    <g class="jmap__inset" transform={`rotate(2.5 ${INSET.x + INSET.w / 2} ${INSET.y + INSET.h / 2})`}>
+      <rect x={INSET.x} y={INSET.y} width={INSET.w} height={INSET.h} rx="10" class="jmap__card"></rect>
+      <rect x={INSET.x + 6} y={INSET.y + 6} width={INSET.w - 12} height={INSET.h - 12} rx="6" class="jmap__card-line"></rect>
+      <text x={INSET.x + 16} y={INSET.y + 30} class="jmap__inset-label">INDIA</text>
+      <g filter="url(#rough)">
+        <path d={map.india} class="jmap__land-shadow" transform="translate(3 4)"></path>
+        <path d={map.india} class="jmap__land jmap__land--india"></path>
+      </g>
+      <text x={INSET.x + INSET.w - 14} y={INSET.y + INSET.h - 12} text-anchor="end" class="jmap__note">not to scale!</text>
+    </g>
+
+    <!-- compass, kolam style -->
+    <g class="jmap__compass" transform="translate(70 545)" aria-hidden="true">
+      <circle r="26"></circle>
+      <path d="M0 -38 L6 -6 L0 0 L-6 -6Z M0 38 L6 6 L0 0 L-6 6Z M-38 0 L-6 -6 L0 0 L-6 6Z M38 0 L6 -6 L0 0 L6 6Z"></path>
+      <text y="-44" text-anchor="middle">N</text>
+    </g>
+
+    <!-- journey line -->
+    <path d={journey} class="jmap__journey" mask="url(#journey-mask)"></path>
+    <g class="jmap__plane" aria-hidden="true">
+      <path d="M-10 -4 L10 0 L-10 4 L-6 0Z"></path>
+    </g>
+
+    <!-- pins -->
+    {
+      pins.map((pin, i) =>
+        pin.places.length === 1 ? (
+          <a
+            href={`/places/${pin.places[0].id}`}
+            class="jmap__pin"
+            data-pin={pin.places[0].id}
+            data-card={JSON.stringify(pin.places[0])}
+            transform={`translate(${pin.x} ${pin.y})`}
+            aria-label={`${pin.places[0].name}, ${pin.places[0].years}. ${pin.places[0].summary}`}
+          >
+            <g class="jmap__pin-pop">
+              <g class="jmap__pin-body">
+                <path d={PIN} class={`jmap__pin-shape accent-${pin.places[0].accent}`} />
+                <circle cy="-24" r="5.5" class="jmap__pin-eye" />
+                <text y="-19.5" text-anchor="middle" class="jmap__pin-num">{pin.order}</text>
+              </g>
+            </g>
+            <text x="18" y="-26" class="jmap__label">{pin.label}</text>
+          </a>
+        ) : (
+          <g class="jmap__cluster" data-cluster transform={`translate(${pin.x} ${pin.y})`}>
+            {pin.places.map((pp) => (
+              <a
+                href={`/places/${pp.id}`}
+                class="jmap__pin jmap__pin--child"
+                data-pin={pp.id}
+                data-card={JSON.stringify(pp)}
+                data-dx={(pp as any).dx}
+                data-dy={(pp as any).dy}
+                aria-label={`${pp.name}, ${pp.years}. ${pp.summary}`}
+                tabindex="-1"
+              >
+                <g class="jmap__pin-body">
+                  <path d={PIN} class={`jmap__pin-shape accent-${pp.accent}`} transform="scale(.82)" />
+                  <circle cy="-19.7" r="4.5" class="jmap__pin-eye" />
+                </g>
+                <text x="0" y="16" text-anchor="middle" class="jmap__label jmap__label--small">{pp.name}</text>
+              </a>
+            ))}
+            <g
+              class="jmap__pin jmap__cluster-btn"
+              role="button"
+              tabindex="0"
+              aria-expanded="false"
+              aria-label={`${pin.label}: ${pin.places.length} places, ${pin.places.map((p) => p.name).join(' and ')}. Press to open.`}
+            >
+              <g class="jmap__pin-pop">
+                <g class="jmap__pin-body">
+                  <path d={PIN} class="jmap__pin-shape accent-saffron" transform="scale(1.12)" />
+                  <circle cy="-27" r="9" class="jmap__pin-eye" />
+                  <text y="-22.6" text-anchor="middle" class="jmap__pin-num">×{pin.places.length}</text>
+                </g>
+              </g>
+              <text x="0" y="-46" text-anchor="middle" class="jmap__label">{pin.label}</text>
+              <text x="0" y="20" text-anchor="middle" class="jmap__hint">click to split</text>
+            </g>
+          </g>
+        ),
+      )
+    }
+  </svg>
+
+  <div class="postcard" data-postcard hidden aria-hidden="true">
+    <span class="postcard__stamp" aria-hidden="true"></span>
+    <p class="postcard__greet serif">Greetings from</p>
+    <p class="postcard__name" data-f="name"></p>
+    <p class="postcard__years eyebrow" data-f="years"></p>
+    <p class="postcard__summary" data-f="summary"></p>
+    <p class="postcard__go hand">click the pin to visit →</p>
+  </div>
+</div>
+
+<style>
+  .jmap {
+    position: relative;
+  }
+  .jmap__svg {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .jmap__oceandot {
+    fill: var(--muted);
+    opacity: 0.35;
+  }
+  .jmap__land {
+    fill: var(--bg-2);
+    stroke: var(--ink);
+    stroke-width: 2.2;
+    stroke-linejoin: round;
+  }
+  .jmap__land--india {
+    fill: color-mix(in oklab, var(--magenta) 14%, var(--bg-2));
+  }
+  .jmap__land-shadow {
+    fill: none;
+    stroke: var(--magenta);
+    stroke-width: 1.4;
+    stroke-dasharray: 2 5;
+    opacity: 0.6;
+  }
+  .jmap__borders {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 0.6;
+    opacity: 0.22;
+  }
+  .jmap__country {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 64px;
+    letter-spacing: 0.3em;
+    fill: var(--ink);
+    opacity: 0.06;
+  }
+  .jmap__card {
+    fill: var(--bg);
+    stroke: var(--ink);
+    stroke-width: 2;
+  }
+  .jmap__card-line {
+    fill: none;
+    stroke: var(--magenta);
+    stroke-width: 1;
+    stroke-dasharray: 6 4;
+  }
+  .jmap__inset-label {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.25em;
+    fill: var(--magenta);
+  }
+  .jmap__note,
+  .jmap__hint {
+    font-family: var(--font-hand);
+    font-size: 17px;
+    fill: var(--muted);
+  }
+  .jmap__compass circle {
+    fill: none;
+    stroke: var(--teal);
+    stroke-width: 1.5;
+    stroke-dasharray: 3 4;
+  }
+  .jmap__compass path {
+    fill: var(--teal);
+    opacity: 0.8;
+  }
+  .jmap__compass text {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 14px;
+    fill: var(--teal);
+  }
+  .jmap__journey {
+    fill: none;
+    stroke: var(--saffron);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 0.1 13;
+  }
+  .jmap__plane path {
+    fill: var(--ink);
+  }
+  .jmap__plane {
+    opacity: 0;
+  }
+  .jmap__pin {
+    cursor: pointer;
+    outline: none;
+  }
+  .jmap__pin-body {
+    transition: transform 0.35s var(--spring);
+  }
+  .jmap__pin:hover .jmap__pin-body,
+  .jmap__pin:focus-visible .jmap__pin-body {
+    transform: scale(1.18) translateY(-3px);
+  }
+  .jmap__pin:focus-visible .jmap__pin-shape {
+    stroke: var(--saffron);
+    stroke-width: 4;
+  }
+  .jmap__pin-shape {
+    stroke: var(--ink);
+    stroke-width: 2;
+    fill: var(--magenta);
+  }
+  .jmap__pin-shape.accent-saffron {
+    fill: var(--saffron);
+  }
+  .jmap__pin-shape.accent-teal {
+    fill: var(--teal);
+  }
+  .jmap__pin-eye {
+    fill: var(--bg);
+    stroke: var(--ink);
+    stroke-width: 1.5;
+  }
+  .jmap__pin-num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 11px;
+    fill: var(--ink);
+  }
+  .jmap__label {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.02em;
+    fill: var(--ink);
+    paint-order: stroke;
+    stroke: var(--bg);
+    stroke-width: 5px;
+    stroke-linejoin: round;
+  }
+  .jmap__label--small {
+    font-size: 15px;
+  }
+  .jmap__pin--child {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .jmap__cluster.is-open .jmap__pin--child {
+    pointer-events: auto;
+  }
+  .jmap__cluster.is-open .jmap__cluster-btn .jmap__hint {
+    display: none;
+  }
+
+  /* postcard preview */
+  .postcard {
+    position: absolute;
+    z-index: 5;
+    width: 250px;
+    padding: 1rem 1.1rem 0.9rem;
+    background: var(--bg);
+    border: 2.5px solid var(--ink);
+    border-radius: 12px;
+    box-shadow: 6px 6px 0 var(--ink);
+    pointer-events: none;
+    transform-origin: bottom left;
+    background-image: linear-gradient(90deg, transparent 0 63%, var(--line) 63% calc(63% + 1.5px), transparent 0);
+  }
+  .postcard__stamp {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 42px;
+    height: 50px;
+    border: 2px dashed var(--magenta);
+    border-radius: 4px;
+    background:
+      radial-gradient(circle, var(--saffron) 0 7px, transparent 8px),
+      color-mix(in oklab, var(--magenta) 12%, var(--bg));
+  }
+  .postcard p {
+    margin: 0;
+  }
+  .postcard__greet {
+    font-size: 1.05rem;
+    color: var(--magenta);
+  }
+  .postcard__name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.7rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    max-width: 75%;
+    margin-bottom: 0.3rem !important;
+  }
+  .postcard__summary {
+    font-size: 0.92rem;
+    line-height: 1.4;
+    margin-top: 0.5rem !important;
+  }
+  .postcard__go {
+    margin-top: 0.4rem !important;
+    color: var(--teal);
+    font-size: 1.15rem;
+  }
+
+  /* small screens: the map becomes a non-interactive mini map */
+  @media (max-width: 719px) {
+    .jmap__label--small,
+    .jmap__hint {
+      display: none;
+    }
+    .jmap__label {
+      font-size: 30px;
+    }
+    .jmap__pin,
+    .jmap__cluster {
+      pointer-events: none;
+    }
+    .postcard {
+      display: none;
+    }
+  }
+  .jmap__pin.is-active .jmap__pin-body,
+  .jmap__cluster.is-active .jmap__cluster-btn .jmap__pin-body {
+    transform: scale(1.35) translateY(-4px);
+  }
+</style>
+
+<script>
+  import { animate, createTimeline, svg, onScroll, stagger } from 'animejs';
+  import { reducedMotion } from '../scripts/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-jmap]');
+  if (root) {
+    const reduced = reducedMotion();
+    const svgEl = root.querySelector('svg')!;
+    const card = root.querySelector<HTMLElement>('[data-postcard]')!;
+    const reveal = root.querySelector<SVGPathElement>('.jmap__reveal')!;
+    const plane = root.querySelector<SVGGElement>('.jmap__plane')!;
+    const pins = root.querySelectorAll<SVGGElement>('.jmap__pin-pop');
+
+    // ----- journey line draws itself when the map scrolls into view -----
+    if (reduced) {
+      reveal.style.strokeDasharray = 'none';
+    } else {
+      const [drawable] = svg.createDrawable(reveal);
+      const motion = svg.createMotionPath(reveal);
+      animate(pins, {
+        scale: [0, 1],
+        translateY: [-30, 0],
+        delay: stagger(140, { start: 200 }),
+        duration: 700,
+        ease: 'outElastic(1, .5)',
+        autoplay: onScroll({ target: svgEl, enter: { container: 'bottom-=80', target: 'top' }, repeat: false }),
+      });
+      createTimeline({ autoplay: onScroll({ target: svgEl, enter: { container: 'bottom-=160', target: 'top' }, repeat: false }) })
+        .add(drawable, { draw: ['0 0', '0 1'], duration: 2600, ease: 'inOut(2)' }, 300)
+        .add(plane, { ...motion, opacity: [{ to: 1, duration: 200 }, { to: 1, duration: 2200 }, { to: 0, duration: 200 }], duration: 2600, ease: 'inOut(2)' }, 300);
+    }
+
+    // ----- postcard preview on hover / focus -----
+    const fill = (data: Record<string, string>) => {
+      card.querySelectorAll<HTMLElement>('[data-f]').forEach((el) => (el.textContent = data[el.dataset.f!] ?? ''));
+    };
+    const show = (pin: Element) => {
+      if (matchMedia('(max-width: 719px)').matches) return;
+      const data = JSON.parse((pin as HTMLElement).dataset.card!);
+      fill(data);
+      card.hidden = false;
+      const host = root.getBoundingClientRect();
+      const r = pin.getBoundingClientRect();
+      let left = r.right - host.left + 12;
+      let top = r.top - host.top - 40;
+      if (left + 260 > host.width) left = r.left - host.left - 262;
+      top = Math.max(-20, Math.min(top, host.height - 200));
+      card.style.left = `${left}px`;
+      card.style.top = `${top}px`;
+      if (!reduced) animate(card, { scale: [0.7, 1], rotate: [-6, -2], opacity: [0, 1], duration: 380, ease: 'outElastic(1, .6)' });
+    };
+    const hide = () => (card.hidden = true);
+    root.querySelectorAll('[data-card]').forEach((pin) => {
+      pin.addEventListener('pointerenter', () => show(pin));
+      pin.addEventListener('pointerleave', hide);
+      pin.addEventListener('focus', () => show(pin));
+      pin.addEventListener('blur', hide);
+    });
+
+    // ----- NorCal cluster splits into its places -----
+    root.querySelectorAll<SVGGElement>('[data-cluster]').forEach((cluster) => {
+      const btn = cluster.querySelector<SVGGElement>('.jmap__cluster-btn')!;
+      const kids = cluster.querySelectorAll<SVGAElement>('.jmap__pin--child');
+      let open = false;
+      const toggle = () => {
+        open = !open;
+        cluster.classList.toggle('is-open', open);
+        btn.setAttribute('aria-expanded', String(open));
+        kids.forEach((k) => k.setAttribute('tabindex', open ? '0' : '-1'));
+        kids.forEach((k) => {
+          const dx = Number(k.dataset.dx), dy = Number(k.dataset.dy);
+          const to = open ? { x: dx, y: dy, o: 1, s: 1 } : { x: 0, y: 0, o: 0, s: 0.4 };
+          animate(k, { translateX: to.x, translateY: to.y, opacity: to.o, scale: to.s, duration: reduced ? 0 : 650, ease: 'outElastic(1, .55)' });
+        });
+        animate(btn, { scale: open ? 0.7 : 1, opacity: open ? 0.55 : 1, duration: reduced ? 0 : 400, ease: 'out(3)' });
+        if (open) kids[0]?.focus();
+      };
+      btn.addEventListener('click', toggle);
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggle();
+        }
+      });
+    });
+
+    // ----- highlight a pin from outside (used by the mobile journey list) -----
+    root.addEventListener('highlight', ((e: CustomEvent<string>) => {
+      root.querySelectorAll('.is-active').forEach((el) => el.classList.remove('is-active'));
+      const pin = root.querySelector(`[data-pin="${e.detail}"]`);
+      if (!pin) return;
+      (pin.closest('[data-cluster]') ?? pin).classList.add('is-active');
+    }) as EventListener);
+  }
+</script>

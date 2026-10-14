@@ -1,0 +1,185 @@
+---
+import { Picture, getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Kolam from './Kolam.astro';
+
+interface Props {
+  photos: { src: ImageMetadata; alt: string; caption?: string }[];
+  placeName: string;
+}
+const { photos, placeName } = Astro.props;
+// Small originals stay small: never upscale low-res photos.
+const items = await Promise.all(
+  photos.map(async (p) => {
+    const large = await getImage({ src: p.src, width: Math.min(p.src.width, 1600), format: 'webp' });
+    const widths = [...new Set([Math.min(p.src.width, 360), Math.min(p.src.width, 640)])];
+    return { ...p, large: large.src, widths, small: p.src.width < 400 };
+  }),
+);
+---
+
+<div class="gallery-wrap">
+  {
+    items.length > 0 ? (
+      <div class="gallery wrap">
+        {items.map((p, i) => (
+          <figure class:list={['gallery__item', { 'gallery__item--small': p.small }]} data-reveal style={`--tilt:${(i % 3) - 1}deg`}>
+            <button type="button" class="gallery__btn" data-large={p.large} data-alt={p.alt} data-caption={p.caption ?? ''} aria-label={`Enlarge photo: ${p.alt}`}>
+              <Picture src={p.src} formats={['avif', 'webp']} widths={p.widths} sizes="(min-width: 1000px) 33vw, (min-width: 600px) 50vw, 100vw" alt={p.alt} loading="lazy" />
+            </button>
+            {p.caption && <figcaption class="hand">{p.caption}</figcaption>}
+          </figure>
+        ))}
+      </div>
+    ) : (
+      <div class="wrap gallery-empty">
+        {[0, 1, 2].map((i) => (
+          <div class="gallery-empty__tile" data-reveal>
+            <Kolam size={160} rings={i + 1} color="var(--magenta)" dotColor="var(--saffron)" />
+          </div>
+        ))}
+        <p class="hand gallery-empty__note">Photos from {placeName} are on their way. The kolams are holding their spot.</p>
+      </div>
+    )
+  }
+
+  <dialog class="lightbox" aria-label="Photo">
+    <form method="dialog"><button class="lightbox__close" aria-label="Close photo">✕</button></form>
+    <p class="lightbox__loading hand" data-loading>developing the photo…</p>
+    <img alt="" data-img />
+    <p class="lightbox__cap hand" data-cap></p>
+  </dialog>
+</div>
+
+<style>
+  .gallery {
+    columns: 3 260px;
+    column-gap: 1.4rem;
+    margin-top: 2rem;
+  }
+  .gallery__item {
+    break-inside: avoid;
+    margin: 0 0 1.6rem;
+    background: #fffdf7;
+    padding: 10px 10px 4px;
+    border: 2px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    rotate: var(--tilt);
+    transition:
+      rotate 0.3s var(--spring),
+      transform 0.3s var(--spring);
+  }
+  .gallery__item:hover {
+    rotate: 0deg;
+    transform: scale(1.02);
+  }
+  .gallery__item--small {
+    max-width: 260px;
+  }
+  .gallery__btn {
+    display: block;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+    width: 100%;
+  }
+  .gallery__btn :global(img) {
+    width: 100%;
+    height: auto;
+  }
+  figcaption {
+    color: #1f1420;
+    font-size: 1.3rem;
+    line-height: 1.2;
+    padding: 0.4rem 0.2rem 0.3rem;
+  }
+  .gallery-empty {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.4rem;
+    margin-top: 2rem;
+  }
+  .gallery-empty__tile {
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    border: 2px dashed var(--muted);
+    border-radius: 6px;
+    background: var(--bg-2);
+  }
+  .gallery-empty__note {
+    grid-column: 1 / -1;
+    font-size: 1.5rem;
+    color: var(--teal);
+  }
+  .lightbox {
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    padding: 1rem;
+    background: var(--bg);
+    color: var(--ink);
+    max-width: min(92vw, 1100px);
+    max-height: 92vh;
+    box-shadow: 10px 10px 0 var(--magenta);
+  }
+  .lightbox::backdrop {
+    background: rgba(20, 8, 16, 0.75);
+    backdrop-filter: blur(4px);
+  }
+  .lightbox img {
+    max-height: 75vh;
+    width: auto;
+    margin-inline: auto;
+  }
+  .lightbox__close {
+    position: absolute;
+    right: 0.6rem;
+    top: 0.6rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: var(--saffron);
+    color: var(--on-saffron);
+    font-weight: 800;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .lightbox__cap {
+    font-size: 1.4rem;
+    margin: 0.6rem 0 0;
+    text-align: center;
+  }
+  .lightbox__loading {
+    font-size: 1.4rem;
+    text-align: center;
+    color: var(--muted);
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLElement>('.gallery-wrap').forEach((wrap) => {
+    const dlg = wrap.querySelector('dialog')!;
+    const img = dlg.querySelector<HTMLImageElement>('[data-img]')!;
+    const cap = dlg.querySelector<HTMLElement>('[data-cap]')!;
+    const loading = dlg.querySelector<HTMLElement>('[data-loading]')!;
+    wrap.querySelectorAll<HTMLButtonElement>('[data-large]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        loading.hidden = false;
+        img.hidden = true;
+        img.onload = () => {
+          loading.hidden = true;
+          img.hidden = false;
+        };
+        img.src = btn.dataset.large!;
+        img.alt = btn.dataset.alt!;
+        cap.textContent = btn.dataset.caption || '';
+        dlg.showModal();
+      });
+    });
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+  });
+</script>

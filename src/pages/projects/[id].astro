@@ -1,0 +1,415 @@
+---
+import { getCollection, getEntry, render, type CollectionEntry } from 'astro:content';
+import { Picture, getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import KolamBorder from '../../components/KolamBorder.astro';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects');
+  return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
+}
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+const { project } = Astro.props;
+const { Content } = await render(project);
+const place = await getEntry(project.data.place);
+const slides = await Promise.all(
+  project.data.slides.map(async (s) => ({
+    ...s,
+    large: s.zoom ? (await getImage({ src: s.src, width: 2000, format: 'webp' })).src : undefined,
+  })),
+);
+---
+
+<Base title={project.data.title} description={project.data.summary}>
+  <article class="case">
+    <header class="wrap case__head">
+      <a href={`/places/${place?.id}`} class="case__back">← Back to {place?.data.name}</a>
+      <div class="folder" data-reveal>
+        <span class="folder__tab">CASE FILE · {project.data.kicker}</span>
+        <h1 class="display case__title">{project.data.title}</h1>
+        <p class="lede case__summary">{project.data.summary}</p>
+        {
+          project.data.stats.length > 0 && (
+            <ul class="case__stats" data-reveal-stagger data-reveal>
+              {project.data.stats.map((s) => (
+                <li>
+                  <strong data-count={s.value}>{s.value}</strong>
+                  <span>{s.label}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+        <span class="folder__clip" aria-hidden="true"></span>
+        {project.data.stamp && <span class="folder__stamp" aria-hidden="true">{project.data.stamp}</span>}
+      </div>
+    </header>
+
+    {
+      slides.length > 0 && (
+        <section class="slides section" aria-labelledby="slides-title">
+          <div class="wrap slides__head">
+            <h2 id="slides-title" class="h2">
+              Flip through <span class="serif">the deck.</span>
+            </h2>
+            <div class="slides__controls">
+              <button type="button" class="slides__btn" data-prev aria-label="Previous slide">
+                ←
+              </button>
+              <span class="slides__count" data-count-label aria-live="polite">
+                1 / {slides.length}
+              </span>
+              <button type="button" class="slides__btn" data-next aria-label="Next slide">
+                →
+              </button>
+            </div>
+          </div>
+          <div class="slides__track" data-track tabindex="0" aria-label="Slides from the team's decks">
+            {slides.map((s, i) => (
+              <figure class="slide" data-slide={i}>
+                <div class="slide__img">
+                  <Picture src={s.src} formats={['avif', 'webp']} widths={[480, 900]} sizes="(min-width: 900px) 760px, 88vw" alt={s.alt} loading={i < 2 ? 'eager' : 'lazy'} />
+                  {s.large && (
+                    <button type="button" class="slide__zoom" data-zoom={s.large} data-alt={s.alt}>
+                      🔍 Zoom in on the framework
+                    </button>
+                  )}
+                </div>
+                {s.caption && <figcaption class="hand">{s.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
+    <section class="wrap case__body prose section">
+      <Content />
+    </section>
+
+    {
+      project.data.note && (
+        <section class="wrap case__reflect">
+          <div class="note">
+            <p class="hand note__title">Diya's note</p>
+            <p>{project.data.note}</p>
+          </div>
+        </section>
+      )
+    }
+
+    <KolamBorder />
+    <nav class="wrap case__nav">
+      <a href={`/places/${place?.id}`} class="btn btn--ghost">← Back to {place?.data.name}</a>
+      <a href="/mailroom" class="btn">Ask me about it <span class="arrow">→</span></a>
+    </nav>
+  </article>
+
+  <dialog class="zoom" data-zoom-dialog aria-label="Zoomed slide">
+    <form method="dialog"><button class="zoom__close" aria-label="Close">✕</button></form>
+    <div class="zoom__scroll"><img alt="" data-zoom-img /></div>
+  </dialog>
+</Base>
+
+<style>
+  .case__head {
+    padding-top: clamp(2rem, 5vw, 3.5rem);
+  }
+  .case__back {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    text-decoration-color: var(--saffron);
+    text-decoration-thickness: 2px;
+  }
+  .folder {
+    position: relative;
+    background: #f5e2a8;
+    color: #1f1420;
+    border: 2.5px solid var(--ink);
+    border-radius: 0 18px 18px 18px;
+    padding: clamp(2rem, 5vw, 3.5rem) clamp(1.3rem, 5vw, 3.5rem);
+    box-shadow: 10px 10px 0 var(--magenta);
+    margin-top: 2.6rem;
+  }
+  .folder__tab {
+    position: absolute;
+    left: -2.5px;
+    top: -2.4rem;
+    background: #f5e2a8;
+    border: 2.5px solid var(--ink);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    padding: 0.5rem 1.1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    max-width: calc(100% - 2rem);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .folder__clip {
+    position: absolute;
+    right: 2rem;
+    top: -1.4rem;
+    width: 22px;
+    height: 70px;
+    border: 3px solid #9aa0a6;
+    border-radius: 11px;
+  }
+  .folder__stamp {
+    position: absolute;
+    right: clamp(1rem, 4vw, 3rem);
+    bottom: clamp(1rem, 4vw, 2.5rem);
+    border: 3px solid #b0175f;
+    color: #b0175f;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(0.9rem, 2.4vw, 1.3rem);
+    letter-spacing: 0.08em;
+    padding: 0.3rem 0.7rem;
+    rotate: -12deg;
+    border-radius: 6px;
+    opacity: 0.85;
+  }
+  .case__title {
+    font-size: clamp(3.2rem, 11vw, 9rem);
+    color: #1f1420;
+  }
+  .case__summary {
+    margin-top: 1.2rem;
+    max-width: 46ch;
+  }
+  .case__stats {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    max-width: 900px;
+  }
+  .case__stats li {
+    display: grid;
+    border-top: 2.5px solid #1f1420;
+    padding-top: 0.5rem;
+  }
+  .case__stats strong {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1;
+    color: #b0175f;
+  }
+  .case__stats span {
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .slides__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .slides__controls {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .slides__btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2.5px solid var(--ink);
+    background: var(--saffron);
+    color: var(--on-saffron);
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform 0.2s var(--spring);
+  }
+  .slides__btn:hover {
+    transform: scale(1.1) rotate(-6deg);
+  }
+  .slides__count {
+    font-weight: 700;
+    min-width: 4.5em;
+    text-align: center;
+  }
+  .slides__track {
+    display: flex;
+    gap: clamp(1rem, 3vw, 2rem);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 0.5rem max(var(--gutter), calc((100vw - var(--max)) / 2)) 1.5rem;
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+  }
+  .slide {
+    flex: 0 0 min(88vw, 760px);
+    scroll-snap-align: center;
+    margin: 0;
+  }
+  .slide__img {
+    position: relative;
+    border: 2.5px solid var(--ink);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 6px 6px 0 var(--ink);
+    background: #fff;
+  }
+  .slide__img :global(img) {
+    width: 100%;
+    aspect-ratio: 2200 / 1238;
+    object-fit: cover;
+  }
+  .slide__zoom {
+    position: absolute;
+    right: 0.8rem;
+    bottom: 0.8rem;
+    border: 2px solid var(--ink);
+    background: var(--saffron);
+    color: var(--on-saffron);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
+    font-weight: 700;
+    cursor: zoom-in;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .slide figcaption {
+    font-size: 1.45rem;
+    margin-top: 0.6rem;
+    padding-left: 0.4rem;
+  }
+
+  .prose {
+    max-width: 760px;
+    padding-top: 0;
+  }
+  .prose :global(h2) {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    margin: 3rem 0 1rem;
+  }
+  .prose :global(h2:first-child) {
+    margin-top: 0;
+  }
+  .prose :global(ul) {
+    padding-left: 1.2rem;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .prose :global(li::marker) {
+    color: var(--magenta);
+  }
+  .prose :global(strong) {
+    color: var(--magenta);
+  }
+
+  .note {
+    max-width: 640px;
+    background: #fff4b8;
+    color: #2a1d10;
+    padding: 1.4rem 1.6rem;
+    rotate: -1.2deg;
+    box-shadow: 4px 6px 0 rgba(0, 0, 0, 0.18);
+    margin-bottom: 4rem;
+  }
+  .note__title {
+    font-size: 1.8rem;
+    margin: 0 0 0.3rem;
+    color: #b0175f;
+  }
+  .case__nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 2rem;
+  }
+
+  .zoom {
+    width: min(96vw, 1400px);
+    max-height: 94vh;
+    padding: 0;
+    border: 2.5px solid var(--ink);
+    border-radius: 12px;
+    background: #fff;
+  }
+  .zoom::backdrop {
+    background: rgba(20, 8, 16, 0.8);
+  }
+  .zoom__scroll {
+    overflow: auto;
+    max-height: 94vh;
+  }
+  .zoom__scroll img {
+    width: 100%;
+    min-width: 900px;
+    max-width: none;
+  }
+  .zoom__close {
+    position: fixed;
+    right: 1.5rem;
+    top: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: var(--saffron);
+    font-weight: 800;
+    cursor: pointer;
+    z-index: 2;
+  }
+</style>
+
+<script>
+  const track = document.querySelector<HTMLElement>('[data-track]');
+  if (track) {
+    const slides = Array.from(track.querySelectorAll<HTMLElement>('[data-slide]'));
+    const label = document.querySelector<HTMLElement>('[data-count-label]')!;
+    let current = 0;
+    const go = (i: number) => {
+      current = Math.max(0, Math.min(slides.length - 1, i));
+      slides[current].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    };
+    document.querySelector('[data-prev]')!.addEventListener('click', () => go(current - 1));
+    document.querySelector('[data-next]')!.addEventListener('click', () => go(current + 1));
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') go(current + 1);
+      if (e.key === 'ArrowLeft') go(current - 1);
+    });
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            current = Number((e.target as HTMLElement).dataset.slide);
+            label.textContent = `${current + 1} / ${slides.length}`;
+          }
+        }
+      },
+      { root: track, threshold: 0.6 },
+    );
+    slides.forEach((s) => io.observe(s));
+  }
+
+  const dlg = document.querySelector<HTMLDialogElement>('[data-zoom-dialog]');
+  if (dlg) {
+    const img = dlg.querySelector<HTMLImageElement>('[data-zoom-img]')!;
+    document.querySelectorAll<HTMLButtonElement>('[data-zoom]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        img.src = btn.dataset.zoom!;
+        img.alt = btn.dataset.alt!;
+        dlg.showModal();
+      }),
+    );
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+  }
+</script>

@@ -1,0 +1,61 @@
+---
+import Base from '../layouts/Base.astro';
+import Kolam from '../components/Kolam.astro';
+---
+
+<Base title="Lost" description="This page doesn't exist. You got lost in Bangalore traffic.">
+  <section class="lost wrap section">
+    <div class="lost__kolam" aria-hidden="true">
+      <Kolam size={220} rings={3} color="var(--magenta)" dotColor="var(--saffron)" />
+    </div>
+    <p class="eyebrow">Error 404</p>
+    <h1 class="display lost__title">You got lost in <span class="serif hl-magenta">Bangalore traffic.</span></h1>
+    <p class="lede">This page doesn't exist (or it moved while you were stuck at Silk Board junction). Let's get you somewhere real.</p>
+    <p class="lost__honk hand" aria-hidden="true">beep beep! <span>honk!</span> beeeep!</p>
+    <div class="lost__actions">
+      <a class="btn" href="/">Back to the Gate <span class="arrow">→</span></a>
+      <a class="btn btn--ghost" href="/map">Check the map</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .lost {
+    display: grid;
+    justify-items: start;
+    gap: 1rem;
+    position: relative;
+  }
+  .lost__kolam {
+    color: var(--magenta);
+    animation: turn 30s linear infinite;
+  }
+  @keyframes turn {
+    to {
+      rotate: 360deg;
+    }
+  }
+  .lost__title {
+    font-size: clamp(3rem, 10vw, 8rem);
+  }
+  .lost__honk {
+    font-size: 1.8rem;
+    color: var(--teal);
+  }
+  .lost__honk span {
+    display: inline-block;
+    color: var(--magenta);
+    animation: honk 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes honk {
+    to {
+      transform: translateY(-6px) rotate(-6deg) scale(1.15);
+    }
+  }
+  .lost__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+</style>

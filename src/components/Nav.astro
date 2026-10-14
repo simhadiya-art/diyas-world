@@ -1,0 +1,417 @@
+---
+import { getCollection } from 'astro:content';
+import LionMark from './LionMark.astro';
+
+const places = (await getCollection('places')).sort((a, b) => a.data.order - b.data.order);
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+
+const rooms = [
+  { href: '/', label: 'The Gate', symbol: '◇' },
+  { href: '/map', label: 'The Map Room', symbol: '◎' },
+  { href: '/mailroom', label: 'The Mailroom', symbol: '✉' },
+];
+const soon = ['The Studio', 'The Dance Floor', 'The Deep End', 'Character Profile'];
+---
+
+<header class="nav">
+  <div class="nav__inner">
+    <a href="/" class="nav__logo" data-roar-logo aria-label="Diya's World, home">
+      <LionMark size={38} />
+      <span class="nav__word">Diya's<span class="serif"> World</span></span>
+    </a>
+
+    <nav class="nav__links" aria-label="Rooms">
+      {
+        rooms.slice(1).map((r) => (
+          <a href={r.href} aria-current={isActive(r.href) ? 'page' : undefined}>
+            {r.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <div class="nav__actions">
+      <button class="theme-toggle" type="button" aria-label="Switch light or dark mode" data-theme-toggle>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <g class="sun" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="4.5"></circle>
+            <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"></path>
+          </g>
+          <path class="moon" d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z" fill="currentColor"></path>
+        </svg>
+      </button>
+      <a class="btn nav__cta" href="/mailroom">Say hi</a>
+      <button class="nav__menu-btn" type="button" aria-expanded="false" aria-controls="legend" data-menu-open>
+        <span>Legend</span>
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"
+          ><path d="M3 6h18M3 12h18M3 18h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path></svg
+        >
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="legend" id="legend" role="dialog" aria-modal="true" aria-label="Site map" hidden>
+  <div class="legend__card">
+    <div class="legend__head">
+      <p class="eyebrow">Legend · Diya's World</p>
+      <button class="legend__close" type="button" data-menu-close aria-label="Close menu">✕</button>
+    </div>
+    <ul class="legend__rooms">
+      {
+        rooms.map((r) => (
+          <li>
+            <a href={r.href} aria-current={isActive(r.href) ? 'page' : undefined}>
+              <span class="legend__sym" aria-hidden="true">{r.symbol}</span>
+              {r.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="eyebrow">Places</p>
+    <ul class="legend__places">
+      {
+        places.map((p) => (
+          <li>
+            <a href={`/places/${p.id}`}>
+              <span class="legend__pin" aria-hidden="true" />
+              {p.data.name}
+              <span class="muted">{p.data.years}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="eyebrow">Under construction</p>
+    <ul class="legend__soon">
+      {soon.map((s) => <li>{s}</li>)}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: color-mix(in oklab, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1.5px solid var(--line);
+  }
+  .nav__inner {
+    width: min(100% - 2 * var(--gutter), var(--max));
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    height: 68px;
+  }
+  .nav__logo {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    color: var(--magenta);
+  }
+  .nav__logo :global(.lion-mark) {
+    transition: transform 0.4s var(--spring);
+  }
+  .nav__logo:hover :global(.lion-mark) {
+    transform: rotate(-12deg) scale(1.08);
+  }
+  .nav__word {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+  }
+  .nav__word .serif {
+    font-weight: 400;
+    color: var(--magenta);
+  }
+  .nav__links {
+    display: none;
+    gap: 1.6rem;
+    margin-left: auto;
+  }
+  .nav__links a {
+    text-decoration: none;
+    font-weight: 600;
+    position: relative;
+  }
+  .nav__links a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -4px;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--saffron);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s var(--spring);
+  }
+  .nav__links a:hover::after,
+  .nav__links a[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+  .nav__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-left: auto;
+  }
+  .theme-toggle,
+  .nav__menu-btn,
+  .legend__close {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 2px solid var(--ink);
+    background: transparent;
+    border-radius: 999px;
+    height: 42px;
+    min-width: 42px;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0 0.7rem;
+    font-weight: 700;
+  }
+  .theme-toggle .moon {
+    display: none;
+  }
+  :global(:root[data-theme='dark']) .theme-toggle .moon {
+    display: block;
+  }
+  :global(:root[data-theme='dark']) .theme-toggle .sun {
+    display: none;
+  }
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .theme-toggle .moon {
+      display: block;
+    }
+    :global(:root:not([data-theme='light'])) .theme-toggle .sun {
+      display: none;
+    }
+  }
+  .theme-toggle svg {
+    transition: transform 0.5s var(--spring);
+  }
+  .theme-toggle:hover svg {
+    transform: rotate(40deg);
+  }
+  .nav__cta {
+    display: none;
+    padding: 0.55em 1.1em;
+    font-size: 0.95rem;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  @media (min-width: 860px) {
+    .nav__links {
+      display: flex;
+    }
+    .nav__actions {
+      margin-left: 1rem;
+    }
+    .nav__cta {
+      display: inline-flex;
+    }
+    .nav__menu-btn span {
+      display: none;
+    }
+  }
+  @media (max-width: 420px) {
+    .nav__word {
+      display: none;
+    }
+  }
+
+  /* ----- full-screen "map legend" menu ----- */
+  .legend {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: color-mix(in oklab, var(--bg) 70%, transparent);
+    backdrop-filter: blur(6px);
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+  .legend[hidden] {
+    display: none;
+  }
+  .legend__card {
+    width: min(100%, 460px);
+    background: var(--bg-2);
+    border: 2.5px solid var(--ink);
+    border-radius: 22px;
+    padding: 1.4rem 1.4rem 1.6rem;
+    box-shadow: 8px 8px 0 var(--magenta);
+    background-image: repeating-linear-gradient(0deg, transparent 0 31px, var(--line) 31px 32px);
+  }
+  .legend__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .legend ul {
+    list-style: none;
+    margin: 0 0 1.2rem;
+    padding: 0;
+  }
+  .legend__rooms a {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2rem, 9vw, 2.6rem);
+    letter-spacing: -0.03em;
+    text-decoration: none;
+    line-height: 1.15;
+  }
+  .legend__rooms a[aria-current='page'] {
+    color: var(--magenta);
+  }
+  .legend__sym {
+    width: 1.2em;
+    font-size: 0.7em;
+    color: var(--saffron);
+  }
+  .legend__places a {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.35rem 0;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+  .legend__places .muted {
+    margin-left: auto;
+    font-size: 0.85rem;
+    font-weight: 400;
+  }
+  .legend__pin {
+    width: 12px;
+    height: 12px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: var(--magenta);
+    flex: none;
+  }
+  .legend__soon {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .legend__soon li {
+    border: 1.5px dashed var(--muted);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 0.15rem 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  :global(.roar-bubble) {
+    position: fixed;
+    z-index: 90;
+    background: var(--saffron);
+    color: var(--on-saffron);
+    border: 2.5px solid var(--ink);
+    border-radius: 18px;
+    padding: 0.6rem 1rem;
+    box-shadow: 5px 5px 0 var(--ink);
+    pointer-events: none;
+    display: grid;
+    max-width: 250px;
+  }
+  :global(.roar-bubble strong) {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 1;
+  }
+  :global(.lion-mark path) {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+</style>
+
+<script>
+  import { animate, stagger } from 'animejs';
+  import { makeRoarCounter } from '../scripts/roar';
+  import { reducedMotion } from '../scripts/motion';
+
+  // ----- theme toggle (remembers the visitor's choice) -----
+  const root = document.documentElement;
+  const toggle = document.querySelector<HTMLButtonElement>('[data-theme-toggle]')!;
+  const current = () =>
+    root.dataset.theme ?? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  toggle.addEventListener('click', () => {
+    const next = current() === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    try {
+      localStorage.setItem('dw-theme', next);
+    } catch {}
+    window.dispatchEvent(new CustomEvent('themechange', { detail: next }));
+  });
+
+  // ----- lion logo easter egg: click 5× on the home page -----
+  const logo = document.querySelector<HTMLAnchorElement>('[data-roar-logo]')!;
+  const lion = logo.querySelector('svg')!;
+  const count = makeRoarCounter(lion);
+  logo.addEventListener('click', (e) => {
+    if (location.pathname === '/') {
+      e.preventDefault();
+      count();
+    }
+  });
+
+  // ----- legend (mobile menu) -----
+  const legend = document.getElementById('legend')!;
+  const openBtn = document.querySelector<HTMLButtonElement>('[data-menu-open]')!;
+  const closeBtn = legend.querySelector<HTMLButtonElement>('[data-menu-close]')!;
+  const open = () => {
+    legend.hidden = false;
+    openBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+    if (!reducedMotion()) {
+      animate(legend.querySelector('.legend__card')!, {
+        scale: [0.85, 1],
+        rotate: [-4, 0],
+        opacity: [0, 1],
+        duration: 500,
+        ease: 'outElastic(1, .7)',
+      });
+      animate(legend.querySelectorAll('li'), {
+        opacity: [0, 1],
+        translateX: [-16, 0],
+        delay: stagger(30, { start: 100 }),
+        duration: 350,
+        ease: 'out(3)',
+      });
+    }
+  };
+  const close = () => {
+    legend.hidden = true;
+    openBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    openBtn.focus();
+  };
+  openBtn.addEventListener('click', open);
+  closeBtn.addEventListener('click', close);
+  legend.addEventListener('click', (e) => {
+    if (e.target === legend) close();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !legend.hidden) close();
+  });
+</script>

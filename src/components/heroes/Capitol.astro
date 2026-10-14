@@ -1,0 +1,120 @@
+---
+// Washington, DC: the U.S. Capitol, drawn in line art as you scroll.
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  place: CollectionEntry<'places'>;
+  experiences?: CollectionEntry<'experiences'>[];
+}
+const { place } = Astro.props;
+const wingCols = (start: number) => Array.from({ length: 8 }, (_, i) => start + i * 14);
+const drumLow = Array.from({ length: 13 }, (_, i) => 236 + i * 10.6);
+const drumHigh = Array.from({ length: 11 }, (_, i) => 248 + i * 10.4);
+const porticoCols = Array.from({ length: 8 }, (_, i) => 251 + i * 14);
+---
+
+<header class="phero capitol-hero" data-capitol-hero>
+  <div class="capitol-hero__sticky">
+    <div class="wrap">
+      <p class="eyebrow phero__kicker">Stop {place.data.order} · {place.data.region}</p>
+      <h1 class="display phero__title">{place.data.name}</h1>
+      <p class="phero__tag serif">{place.data.tagline}</p>
+    </div>
+    <div class="wrap">
+      <svg class="phero__art capitol-art" viewBox="0 0 600 330" aria-hidden="true" data-capitol>
+        <g class="cap-lines">
+          <path class="ln" d="M10 318 L590 318"></path>
+          <!-- wings -->
+          <path class="ln" d="M30 318 L30 236 L222 236 L222 318 M378 318 L378 236 L570 236 L570 318"></path>
+          <path class="ln" d="M24 236 L228 236 M372 236 L576 236 M28 228 L224 228 L224 236 M376 228 L572 228 L572 236 M28 228 L28 236 M376 228 L376 236"></path>
+          <path class="ln" d="M76 228 L126 206 L176 228 M424 228 L474 206 L524 228"></path>
+          {[...wingCols(78), ...wingCols(426)].map((x) => <path class="ln thin" d={`M${x} 236 L${x} 300`} />)}
+          <path class="ln" d="M70 300 L182 300 M418 300 L530 300"></path>
+          <!-- central block -->
+          <path class="ln" d="M222 318 L222 214 L378 214 L378 318"></path>
+          <path class="ln" d="M240 214 L300 180 L360 214"></path>
+          {porticoCols.map((x) => <path class="ln thin" d={`M${x} 214 L${x} 290`} />)}
+          <path class="ln" d="M236 290 L364 290 M228 304 L372 304 M222 318 L378 318"></path>
+          <!-- drum, two tiers -->
+          <path class="ln" d="M232 180 L368 180 L368 140 L232 140 Z"></path>
+          {drumLow.map((x) => <path class="ln thin" d={`M${x} 178 L${x} 144`} />)}
+          <path class="ln" d="M244 140 L356 140 L356 112 L244 112 Z"></path>
+          {drumHigh.map((x) => <path class="ln thin" d={`M${x} 138 L${x} 116`} />)}
+          <!-- dome -->
+          <path class="ln" d="M246 112 Q248 52 300 40 Q352 52 354 112"></path>
+          <path class="ln thin" d="M270 110 Q272 62 300 42 M330 110 Q328 62 300 42 M300 42 L300 110 M252 92 Q300 82 348 92 M258 70 Q300 62 342 70"></path>
+          <!-- lantern + statue of freedom -->
+          <path class="ln" d="M290 40 L290 24 L310 24 L310 40"></path>
+          <path class="ln" d="M288 24 Q300 14 312 24"></path>
+          <path class="ln" d="M300 16 L300 4 M296 8 L304 8"></path>
+          <!-- trees -->
+          <path class="ln tree" d="M0 318 q-2 -26 14 -34 q10 -14 24 -2 q14 -2 12 14 q8 12 -6 22 Z"></path>
+          <path class="ln tree" d="M596 318 q4 -28 -12 -36 q-10 -14 -24 -2 q-14 -2 -12 14 q-8 12 6 24 Z"></path>
+        </g>
+        <path class="flag-pole ln" d="M300 4 L300 4"></path>
+      </svg>
+      <p class="hand capitol-hint" aria-hidden="true">keep scrolling, it's still being built ↓</p>
+    </div>
+  </div>
+</header>
+
+<style>
+  .capitol-hero {
+    min-height: 150vh;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+  .capitol-hero__sticky {
+    position: sticky;
+    top: 68px;
+  }
+  .capitol-art {
+    margin-top: 1rem;
+    max-height: 52vh;
+  }
+  .capitol-art .thin {
+    stroke-width: 1.4;
+  }
+  .capitol-art .tree {
+    stroke: var(--teal);
+  }
+  .capitol-hint {
+    text-align: center;
+    color: var(--muted);
+    font-size: 1.3rem;
+    margin-top: 0.4rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .capitol-hero {
+      min-height: 0;
+    }
+    .capitol-hero__sticky {
+      position: static;
+    }
+    .capitol-hint {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { animate, svg, stagger, onScroll } from 'animejs';
+  import { reducedMotion } from '../../scripts/motion';
+
+  const hero = document.querySelector<HTMLElement>('[data-capitol-hero]');
+  const art = document.querySelector<SVGSVGElement>('[data-capitol]');
+  if (hero && art && !reducedMotion()) {
+    const lines = svg.createDrawable(art.querySelectorAll('.cap-lines > *'));
+    // Scroll position drives the drawing: top of the hero → bottom of the hero.
+    animate(lines, {
+      draw: ['0 0', '0 1'],
+      delay: stagger(12),
+      ease: 'linear',
+      duration: 1000,
+      autoplay: onScroll({ target: hero, enter: 'top top', leave: 'bottom bottom', sync: 0.25 }),
+    });
+    animate('.capitol-hint', {
+      opacity: [1, 0],
+      autoplay: onScroll({ target: hero, enter: 'top top', leave: 'center top', sync: true }),
+    });
+  }
+</script>

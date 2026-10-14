@@ -1,0 +1,107 @@
+---
+// Sacramento: the State Capitol draws itself in, then the dome turns gold.
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  place: CollectionEntry<'places'>;
+  experiences?: CollectionEntry<'experiences'>[];
+}
+const { place } = Astro.props;
+const portico = Array.from({ length: 7 }, (_, i) => 158 + i * 14);
+const drum = Array.from({ length: 9 }, (_, i) => 164 + i * 9);
+const windows = [60, 85, 110, 290, 315, 340];
+---
+
+<header class="phero dome-hero">
+  <div class="wrap dome-hero__grid">
+    <div>
+      <p class="eyebrow phero__kicker">Stop {place.data.order} · {place.data.region}</p>
+      <h1 class="display phero__title">{place.data.name}</h1>
+      <p class="phero__tag serif">{place.data.tagline}</p>
+    </div>
+    <svg class="phero__art dome-art" viewBox="0 0 400 300" aria-hidden="true" data-dome>
+      <!-- golden dome fill sits under the linework -->
+      <path class="dome-gold" d="M152 122 Q152 62 200 52 Q248 62 248 122 Z"></path>
+      <path class="dome-gold" d="M190 32 Q200 20 210 32 Z"></path>
+      <g class="dome-lines">
+        <path class="ln" d="M20 282 L380 282"></path>
+        <path class="ln" d="M40 282 L40 200 L360 200 L360 282"></path>
+        <path class="ln" d="M30 200 L370 200 M36 192 L364 192 L364 200 M36 192 L36 200"></path>
+        <path class="ln" d="M142 192 L200 160 L258 192"></path>
+        {portico.map((x) => <path class="ln" d={`M${x} 200 L${x} 268`} />)}
+        <path class="ln" d="M146 268 L254 268 M140 276 L260 276"></path>
+        {windows.map((x) => <path class="ln" d={`M${x} 218 h12 v20 h-12 Z M${x} 248 h12 v20 h-12 Z`} />)}
+        <path class="ln" d="M156 160 L244 160 L244 122 L156 122 Z"></path>
+        {drum.map((x) => <path class="ln" d={`M${x} 160 L${x} 126`} />)}
+        <path class="ln" d="M150 122 L250 122"></path>
+        <path class="ln" d="M152 122 Q152 62 200 52 Q248 62 248 122"></path>
+        <path class="ln" d="M176 120 Q178 74 200 54 M224 120 Q222 74 200 54 M200 54 L200 120"></path>
+        <path class="ln" d="M192 52 L192 34 L208 34 L208 52"></path>
+        <path class="ln" d="M190 32 Q200 20 210 32 Z"></path>
+        <path class="ln" d="M200 21 L200 8"></path>
+        <circle class="ln" cx="200" cy="6" r="3"></circle>
+        <!-- palm trees, because California -->
+        <path class="ln palm" d="M14 282 Q18 240 12 210 M12 210 q-14 -4 -22 6 M12 210 q12 -10 24 -2 M12 210 q-6 -12 -18 -12 M12 210 q4 -14 16 -14"></path>
+        <path class="ln palm" d="M388 282 Q384 236 392 204 M392 204 q-14 -4 -22 6 M392 204 q12 -10 24 -2 M392 204 q-6 -12 -18 -12 M392 204 q4 -14 16 -14"></path>
+      </g>
+      <g class="sparkles">
+        <path d="M262 64 l3 -9 l3 9 l9 3 l-9 3 l-3 9 l-3 -9 l-9 -3 Z"></path>
+        <path d="M130 84 l2 -6 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 Z"></path>
+        <path d="M232 30 l2 -6 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 Z"></path>
+      </g>
+    </svg>
+  </div>
+</header>
+
+<style>
+  .dome-hero__grid {
+    display: grid;
+    gap: 2rem;
+    align-items: end;
+  }
+  @media (min-width: 900px) {
+    .dome-hero__grid {
+      grid-template-columns: 1fr minmax(340px, 0.8fr);
+    }
+    .dome-hero :global(.phero__title) {
+      font-size: clamp(3.4rem, 9vw, 8.5rem);
+    }
+  }
+  .dome-art {
+    max-width: 560px;
+    justify-self: center;
+  }
+  .dome-gold {
+    fill: var(--saffron);
+  }
+  .palm {
+    stroke: var(--teal);
+  }
+  .sparkles path {
+    fill: var(--saffron);
+    stroke: var(--ink);
+    stroke-width: 1;
+  }
+  :global(.js-motion) .dome-gold,
+  :global(.js-motion) .sparkles path {
+    opacity: 0;
+  }
+</style>
+
+<script>
+  import { createTimeline, svg, stagger } from 'animejs';
+  import { reducedMotion } from '../../scripts/motion';
+
+  const art = document.querySelector<SVGSVGElement>('[data-dome]');
+  if (art) {
+    const gold = art.querySelectorAll('.dome-gold');
+    const sparkles = art.querySelectorAll('.sparkles path');
+    if (reducedMotion()) {
+      [...gold, ...sparkles].forEach((el) => ((el as SVGElement).style.opacity = '1'));
+    } else {
+      createTimeline()
+        .add(svg.createDrawable(art.querySelectorAll('.dome-lines > *')), { draw: ['0 0', '0 1'], duration: 1100, delay: stagger(22), ease: 'inOut(2)' })
+        .add(gold, { opacity: [0, 1], duration: 600, ease: 'out(2)' }, '-=300')
+        .add(sparkles, { opacity: [0, 1, 0.9], scale: [0, 1.4, 1], rotate: [0, 90], duration: 700, delay: stagger(120), ease: 'outElastic(1, .5)' }, '-=200');
+    }
+  }
+</script>

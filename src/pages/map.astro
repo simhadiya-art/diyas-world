@@ -1,0 +1,188 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import JourneyMap from '../components/JourneyMap.astro';
+
+const places = (await getCollection('places')).sort((a, b) => a.data.order - b.data.order);
+const experiences = await getCollection('experiences');
+const orgsFor = (id: string) => experiences.filter((e) => e.data.place.id === id).map((e) => e.data.org);
+---
+
+<Base title="The Map Room" description="Diya Simha's journey so far: Bangalore, Davis, Sacramento, Washington DC and Phoenix.">
+  <section class="maproom">
+    <div class="wrap maproom__head">
+      <p class="eyebrow" data-reveal>The Map Room</p>
+      <h1 class="display maproom__title" data-reveal>Where I've <span class="serif hl-teal">been.</span></h1>
+      <p class="lede" data-reveal>
+        Five cities, two countries, one dotted line. Hover a pin for a postcard, click to step inside. <span class="hand hl-magenta"
+          >(NorCal is two places pretending to be one.)</span
+        >
+      </p>
+    </div>
+
+    <div class="maproom__map wrap">
+      <JourneyMap places={places} />
+    </div>
+
+    <div class="wrap">
+      <h2 class="h2 journey__title" data-reveal>The journey, <span class="serif">in order.</span></h2>
+      <ol class="journey">
+        {
+          places.map((p, i) => (
+            <li class={`journey__item accent-${p.data.accent}`} data-journey={p.id} data-reveal>
+              <a href={`/places/${p.id}`} class="journey__card">
+                <span class="journey__num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="journey__stamp" aria-hidden="true" />
+                <span class="serif journey__greet">Greetings from</span>
+                <span class="journey__name">{p.data.name}</span>
+                <span class="eyebrow">
+                  {p.data.region} · {p.data.years}
+                </span>
+                <span class="journey__summary">{p.data.summary}</span>
+                {orgsFor(p.id).length > 0 && <span class="journey__orgs">{orgsFor(p.id).join(' · ')}</span>}
+                <span class="journey__go">
+                  Step inside <span aria-hidden="true">→</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .maproom__head {
+    padding-top: clamp(2.5rem, 7vw, 5rem);
+  }
+  .maproom__title {
+    margin: 0.4rem 0 1rem;
+  }
+  .maproom__map {
+    margin-block: 2rem 4rem;
+  }
+  @media (max-width: 719px) {
+    .maproom__map {
+      position: sticky;
+      top: 68px;
+      z-index: 10;
+      background: var(--bg);
+      margin-block: 1rem 0;
+      padding-block: 0.4rem;
+      border-bottom: 2px solid var(--line);
+    }
+  }
+  .journey__title {
+    margin: 2rem 0 2rem;
+  }
+  .journey {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 1.6rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 330px), 1fr));
+  }
+  .journey__item {
+    --c: var(--magenta);
+  }
+  .journey__item.accent-saffron {
+    --c: var(--saffron);
+  }
+  .journey__item.accent-teal {
+    --c: var(--teal);
+  }
+  .journey__item:nth-child(odd) .journey__card {
+    rotate: -1deg;
+  }
+  .journey__item:nth-child(even) .journey__card {
+    rotate: 1.2deg;
+  }
+  .journey__card {
+    position: relative;
+    display: grid;
+    gap: 0.35rem;
+    height: 100%;
+    padding: 1.4rem 1.4rem 1.2rem;
+    text-decoration: none;
+    background: var(--bg-2);
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 6px 6px 0 var(--c);
+    transition:
+      transform 0.35s var(--spring),
+      box-shadow 0.35s var(--spring),
+      rotate 0.35s var(--spring);
+  }
+  .journey__card:hover,
+  .journey__card:focus-visible {
+    rotate: 0deg !important;
+    transform: translate(-3px, -3px);
+    box-shadow: 10px 10px 0 var(--c);
+  }
+  .journey__num {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .journey__stamp {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+    width: 46px;
+    height: 56px;
+    border: 2px dashed var(--c);
+    border-radius: 4px;
+    background: radial-gradient(circle, var(--c) 0 8px, transparent 9px);
+    opacity: 0.85;
+  }
+  .journey__greet {
+    color: var(--c);
+    font-size: 1.15rem;
+    filter: brightness(0.85);
+  }
+  .accent-saffron .journey__greet {
+    color: var(--ink);
+  }
+  .journey__name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2rem, 6vw, 2.6rem);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+  }
+  .journey__summary {
+    margin-top: 0.3rem;
+  }
+  .journey__orgs {
+    font-size: 0.88rem;
+    color: var(--muted);
+  }
+  .journey__go {
+    margin-top: 0.6rem;
+    font-weight: 700;
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--saffron);
+    text-decoration-thickness: 3px;
+    text-underline-offset: 4px;
+  }
+</style>
+
+<script>
+  // On phones, the sticky mini map highlights the city whose postcard you're reading.
+  const map = document.querySelector('[data-jmap]');
+  if (map && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) map.dispatchEvent(new CustomEvent('highlight', { detail: (e.target as HTMLElement).dataset.journey }));
+        }
+      },
+      { rootMargin: '-45% 0px -45% 0px' },
+    );
+    document.querySelectorAll('[data-journey]').forEach((el) => io.observe(el));
+  }
+</script>

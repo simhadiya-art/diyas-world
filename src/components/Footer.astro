@@ -1,0 +1,71 @@
+---
+import LionMark from './LionMark.astro';
+import KolamBorder from './KolamBorder.astro';
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <KolamBorder />
+  <div class="wrap footer__inner">
+    <button class="footer__lion" type="button" data-roar-footer aria-label="A lion. Try clicking it five times.">
+      <LionMark size={64} strokeWidth={1.8} />
+    </button>
+    <div class="footer__text">
+      <p class="footer__big">Still reading? <span class="serif">Then we should talk.</span></p>
+      <p>
+        <a href="/mailroom">Write to the Mailroom</a> ·
+        <a href="mailto:simhadiya@gmail.com">simhadiya@gmail.com</a> ·
+        <a href="https://www.linkedin.com/in/diyasimha" rel="noopener" target="_blank">LinkedIn</a>
+      </p>
+      <p class="muted small">© {year} Diya Simha. Built loud, on purpose.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    margin-top: 4rem;
+    padding-bottom: 2.5rem;
+  }
+  .footer__inner {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+    padding-top: 2rem;
+  }
+  .footer__lion {
+    border: none;
+    background: none;
+    padding: 0;
+    color: var(--magenta);
+    cursor: pointer;
+    flex: none;
+  }
+  .footer__big {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.6rem;
+  }
+  .footer__big .serif {
+    color: var(--magenta);
+    font-weight: 400;
+  }
+  .footer a {
+    font-weight: 600;
+    text-decoration-color: var(--saffron);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .small {
+    font-size: 0.85rem;
+  }
+</style>
+
+<script>
+  import { makeRoarCounter } from '../scripts/roar';
+  const btn = document.querySelector<HTMLButtonElement>('[data-roar-footer]')!;
+  btn.addEventListener('click', makeRoarCounter(btn.querySelector('svg')!));
+</script>

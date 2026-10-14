@@ -1,0 +1,163 @@
+---
+// A door into one room. Open rooms are links; Phase 2 rooms show an "opening soon" teaser.
+interface Props {
+  name: string;
+  line: string;
+  href?: string;
+  color: 'saffron' | 'magenta' | 'teal';
+  symbol: 'map' | 'mail' | 'needle' | 'music' | 'wave' | 'star';
+}
+const { name, line, href, color, symbol } = Astro.props;
+const Tag = href ? 'a' : 'div';
+
+const icons: Record<Props['symbol'], string> = {
+  map: '<path d="M4 7l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M10 4v15M16 7v15"/>',
+  mail: '<rect x="3" y="6" width="20" height="14" rx="2"/><path d="m3 8 10 7 10-7"/>',
+  needle: '<path d="M5 21 20 6"/><ellipse cx="20.5" cy="5.5" rx="1.6" ry="2.6" transform="rotate(45 20.5 5.5)"/><path d="M8 18c-4-1-4-6 0-6s4 5 8 4"/>',
+  music: '<path d="M9 18V6l12-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="18.5" cy="16" r="2.5"/>',
+  wave: '<path d="M2 9c3 0 3-2 6-2s3 2 6 2 3-2 6-2 3 2 4 2M2 15c3 0 3-2 6-2s3 2 6 2 3-2 6-2 3 2 4 2M2 21c3 0 3-2 6-2s3 2 6 2 3-2 6-2 3 2 4 2"/>',
+  star: '<path d="m13 3 2.8 6 6.2.6-4.7 4.2 1.4 6.2-5.7-3.3L7.3 20l1.4-6.2L4 9.6l6.2-.6z"/>',
+};
+---
+
+<li class:list={['door', `door--${color}`, { 'door--soon': !href }]}>
+  <Tag href={href} class="door__frame">
+    <div class="door__inside">
+      <svg viewBox="0 0 26 26" width="44" height="44" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <Fragment set:html={icons[symbol]} />
+      </svg>
+      <p class="door__line">{line}</p>
+    </div>
+    <div class="door__panel" aria-hidden="true">
+      <span class="door__knob"></span>
+    </div>
+    <div class="door__label">
+      <h3>{name}</h3>
+      <span class="tag">{href ? 'Open' : 'Opening soon'}</span>
+    </div>
+  </Tag>
+</li>
+
+<style>
+  .door {
+    --c: var(--saffron);
+  }
+  .door--magenta {
+    --c: var(--magenta);
+  }
+  .door--teal {
+    --c: var(--teal);
+  }
+  .door__frame {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    text-decoration: none;
+    height: 100%;
+    border: 2.5px solid var(--ink);
+    border-radius: 140px 140px 18px 18px;
+    background: var(--bg-2);
+    overflow: hidden;
+    perspective: 900px;
+    transition:
+      transform 0.35s var(--spring),
+      box-shadow 0.35s var(--spring);
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  a.door__frame:hover,
+  a.door__frame:focus-visible {
+    transform: translate(-3px, -3px);
+    box-shadow: 9px 9px 0 var(--c);
+  }
+  .door__inside,
+  .door__panel {
+    grid-area: 1 / 1;
+    min-height: 220px;
+    border-radius: 130px 130px 0 0;
+  }
+  .door__inside {
+    margin: 14px 14px 0;
+    padding: 3.4rem 1.4rem 1.4rem;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 0.8rem;
+    text-align: center;
+    color: var(--c);
+    background:
+      radial-gradient(circle at 50% 30%, color-mix(in oklab, var(--c) 18%, transparent), transparent 70%),
+      var(--bg);
+  }
+  .door__line {
+    color: var(--ink);
+    font-size: 0.98rem;
+    margin: 0;
+  }
+  .door__panel {
+    margin: 14px 14px 0;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 22px, color-mix(in oklab, var(--ink) 10%, transparent) 22px 24px),
+      var(--c);
+    transform-origin: left center;
+    transition: transform 0.7s var(--spring);
+    position: relative;
+    border: 2px solid var(--ink);
+    border-bottom: none;
+  }
+  .door__knob {
+    position: absolute;
+    right: 18px;
+    top: 55%;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--ink);
+  }
+  a.door__frame:hover .door__panel,
+  a.door__frame:focus-visible .door__panel {
+    transform: rotateY(-72deg);
+  }
+  .door--soon .door__frame:hover .door__panel {
+    transform: rotateY(-10deg);
+  }
+  .door--soon .door__panel {
+    background:
+      repeating-linear-gradient(-45deg, transparent 0 14px, color-mix(in oklab, var(--ink) 14%, transparent) 14px 16px),
+      color-mix(in oklab, var(--c) 45%, var(--bg));
+  }
+  @media (hover: none) {
+    /* on touch screens there is no hover, so show what's inside */
+    .door__panel {
+      transform: rotateY(-72deg);
+    }
+    .door--soon .door__panel {
+      transform: rotateY(-62deg);
+    }
+  }
+  .door__label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.2rem 1.1rem;
+    border-top: 2.5px solid var(--ink);
+    background: var(--bg-2);
+    position: relative;
+    z-index: 1;
+  }
+  .door__label h3 {
+    font-size: 1.5rem;
+  }
+  .door--soon .tag {
+    color: var(--muted);
+    border-style: dashed;
+  }
+  a .tag {
+    background: var(--c);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+  .door--saffron a .tag {
+    color: var(--on-saffron);
+  }
+</style>

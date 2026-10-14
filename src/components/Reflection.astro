@@ -1,0 +1,90 @@
+---
+import type { CollectionEntry } from 'astro:content';
+interface Props {
+  entry: CollectionEntry<'experiences'>;
+  empty: boolean;
+}
+const { entry, empty } = Astro.props;
+const prompts = entry.data.reflectionPrompts.length
+  ? entry.data.reflectionPrompts
+  : ["A moment I'll remember…", 'Something I got wrong…', 'What I learned that never made the resume…'];
+---
+
+<article class:list={['entry', { 'entry--empty': empty }]} data-reveal>
+  <header>
+    <p class="entry__org hand">{entry.data.org}</p>
+    <p class="entry__date eyebrow">{entry.data.dates}</p>
+  </header>
+  {
+    empty ? (
+      <div class="entry__body">
+        <p class="entry__soon">This page of the journal is still blank. I'm writing it.</p>
+        <ul class="entry__prompts hand">
+          {prompts.map((p) => (
+            <li>{p}</li>
+          ))}
+        </ul>
+      </div>
+    ) : (
+      <div class="entry__body">
+        <slot />
+      </div>
+    )
+  }
+</article>
+
+<style>
+  .entry {
+    position: relative;
+    padding: 1.6rem 1.6rem 1.4rem 2.6rem;
+    background:
+      linear-gradient(90deg, transparent 1.7rem, color-mix(in oklab, var(--magenta) 45%, transparent) 1.7rem calc(1.7rem + 1.5px), transparent 0),
+      repeating-linear-gradient(transparent 0 calc(1.9rem - 1px), color-mix(in oklab, var(--teal) 30%, transparent) calc(1.9rem - 1px) 1.9rem),
+      var(--bg-2);
+    border: 2px solid var(--ink);
+    border-radius: 4px 16px 16px 4px;
+    box-shadow: 5px 5px 0 var(--ink);
+    line-height: 1.9rem;
+  }
+  .entry:nth-child(even) {
+    rotate: 0.6deg;
+  }
+  .entry:nth-child(odd) {
+    rotate: -0.5deg;
+  }
+  .entry header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+  .entry__org {
+    font-size: 1.8rem;
+    margin: 0;
+    color: var(--magenta);
+    line-height: 1.9rem;
+  }
+  .entry__date {
+    margin: 0;
+    white-space: nowrap;
+  }
+  .entry__body {
+    margin-top: 0.4rem;
+  }
+  .entry__body :global(p) {
+    margin: 0 0 1.9rem;
+  }
+  .entry__soon {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 1.2rem;
+    margin: 0 !important;
+    color: var(--muted);
+  }
+  .entry__prompts {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: 1.35rem;
+    color: var(--teal);
+  }
+</style>
